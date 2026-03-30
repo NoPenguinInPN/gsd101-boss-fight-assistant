@@ -1,20 +1,20 @@
 # Boss Fight Assistant
 
-一个直接在浏览器中打开即可使用的桌游辅助小程序，用来记录：
+A lightweight browser-based helper for running a multi-phase boss encounter. It tracks:
 
-- 第一阶段玩家轮转时 Boss 的成长
-- 当前轮次、总回合数、当前玩家
-- 第二阶段的单次伤害、持续伤害和随机 Boss 技能
-- 手动微调 Boss 血量
+- Boss growth during the first phase while players rotate turns
+- Current round, total turns, and current player
+- Instant effects, ongoing effects, and random Boss skills in the battle phase
+- Manual Boss HP adjustment
 
-## 使用方式
+## Usage
 
-直接打开 [index.html](/Users/shinerong/Desktop/gsd尝试/index.html) 即可。
+Open [index.html](/Users/shinerong/Desktop/gsd尝试/index.html) directly in your browser.
 
-如果你更喜欢本地服务器，也可以在这个目录运行：
+If you prefer running it from a local server, use:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-然后访问 `http://localhost:8000`。
+Then visit `http://localhost:8000`.
