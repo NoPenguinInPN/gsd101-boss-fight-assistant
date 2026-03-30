@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Boss Fight Assistant</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <div class="transition-overlay hidden" id="transitionOverlay" aria-hidden="true">
+        <div class="transition-backdrop"></div>
+        <div class="transition-blood-haze"></div>
+        <div class="transition-scene">
+          <div class="transition-blood-sheet transition-blood-sheet-back"></div>
+          <div class="transition-blood-sheet transition-blood-sheet-mid"></div>
+          <div class="transition-blood-sheet transition-blood-sheet-front"></div>
+          <div class="transition-blood-drip transition-blood-drip-one"></div>
+          <div class="transition-blood-drip transition-blood-drip-two"></div>
+          <div class="transition-blood-drip transition-blood-drip-three"></div>
+          <div class="transition-blood-drip transition-blood-drip-four"></div>
+          <div class="transition-blood-line transition-blood-line-one"></div>
+          <div class="transition-blood-line transition-blood-line-two"></div>
+          <div class="transition-blood-line transition-blood-line-three"></div>
+          <div class="transition-blood-line transition-blood-line-four"></div>
+          <div class="transition-blood-line transition-blood-line-five"></div>
+          <div class="transition-blood-line transition-blood-line-six"></div>
+          <div class="transition-blood-line transition-blood-line-seven"></div>
+          <div class="transition-blood-line transition-blood-line-eight"></div>
+          <div class="transition-bat transition-bat-one"></div>
+          <div class="transition-bat transition-bat-two"></div>
+          <div class="transition-bat transition-bat-three"></div>
+          <div class="transition-bat transition-bat-four"></div>
+          <div class="transition-bat transition-bat-five"></div>
+          <div class="transition-bat transition-bat-six"></div>
+          <div class="transition-bat transition-bat-seven"></div>
+          <div class="transition-bat transition-bat-eight"></div>
+          <div class="transition-bat transition-bat-nine"></div>
+          <div class="transition-bat transition-bat-ten"></div>
+          <div class="transition-bat transition-bat-eleven"></div>
+          <div class="transition-bat transition-bat-twelve"></div>
+          <div class="transition-blur-boss" id="transitionBlurBoss"></div>
+          <div class="transition-echo transition-echo-one"></div>
+          <div class="transition-echo transition-echo-two"></div>
+          <div class="transition-echo transition-echo-three"></div>
+          <div class="transition-full-boss" id="transitionFullBoss"></div>
+          <div class="transition-focus-ring"></div>
+          <div class="transition-flash"></div>
+        </div>
+      </div>
+
+      <div class="skill-announcement hidden" id="skillAnnouncement">
+        <div class="log-backdrop" id="skillAnnouncementBackdrop"></div>
+        <section class="stage-card skill-announcement-dialog">
+          <div class="log-dialog-head">
+            <h2 id="skillAnnouncementTitle">Boss Skills</h2>
+            <button id="skillAnnouncementCloseBtn" class="log-close" type="button">Close</button>
+          </div>
+          <div id="skillAnnouncementList" class="skill-list"></div>
+        </section>
+      </div>
+
+      <section class="screen active setup-screen" id="setupScreen">
+        <div class="stage-card setup-card">
+          <h1 id="setupTitle">Initialize Battle</h1>
+
+          <form id="setupForm" class="form-stack">
+            <label>
+              <span id="playerCountLabel">Player Count</span>
+              <input id="playerCount" type="number" min="1" max="12" value="4" required />
+            </label>
+            <label>
+              <span id="initialHpLabel">Boss Starting HP</span>
+              <input id="initialHp" type="number" min="0" value="0" required />
+            </label>
+            <label>
+              <span id="initialSkillCountLabel">Starting Skill Count</span>
+              <input id="initialSkillCount" type="number" min="0" max="6" value="1" required />
+            </label>
+            <button id="enterGatherBtn" type="submit" class="primary large-button">Enter Resource Phase</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="screen gather-screen" id="gatherScreen">
+        <button id="gatherSkillToggleBtn" class="skill-toggle" type="button">Skill Library</button>
+        <div class="mist-layer"></div>
+        <div class="blur-boss-mark" aria-hidden="true"></div>
+        <div class="stage-card gather-card">
+          <h2 id="gatherTitle">Resource Phase</h2>
+
+          <div class="focus-player">
+            <span id="gatherCurrentPlayerText">Current Acting Player</span>
+            <strong id="gatherPlayerLabel">Player 1</strong>
+          </div>
+
+          <div class="metrics-row">
+            <div class="metric-card">
+              <span id="bossHpLabelTop">Boss HP</span>
+              <strong id="bossHp">0</strong>
+            </div>
+            <div class="metric-card">
+              <span id="roundCountLabel">Current Round</span>
+              <strong id="roundCount">1</strong>
+            </div>
+            <div class="metric-card">
+              <span id="turnCountLabel">Total Turns</span>
+              <strong id="turnCount">0</strong>
+            </div>
+          </div>
+
+          <div class="gather-actions">
+            <button id="endTurnBtn" class="primary large-button" disabled>End Current Player Turn</button>
+            <button id="startFightBtn" class="accent-button" disabled>Enter Boss Fight</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen fight-screen" id="fightScreen">
+        <button id="skillToggleBtn" class="skill-toggle" type="button">Skill Library</button>
+        <button id="logToggleBtn" class="log-toggle" type="button">Battle Log</button>
+
+        <div class="fight-stage">
+          <div class="fight-layout">
+            <form id="battleForm" class="stage-card fight-panel">
+              <label class="panel-section">
+                <span id="actingPlayerLabel">Current Acting Player</span>
+                <input id="actingPlayer" class="compact-input" type="text" placeholder="For example: Player 1 / Alice" />
+              </label>
+              <label class="panel-section">
+                <span id="instantEffectLabel">Instant Effect</span>
+                <div class="effect-field">
+                  <select id="instantEffectType">
+                    <option id="instantOptionDamage" value="damage">Deal Damage</option>
+                    <option id="instantOptionHeal" value="heal">Heal Boss</option>
+                  </select>
+                  <input id="instantDamage" type="number" min="0" value="0" />
+                </div>
+              </label>
+              <div class="panel-section effect-stack-group">
+                <label>
+                  <span id="dotEffectLabel">Ongoing Effect / Turn</span>
+                  <div class="effect-field">
+                    <select id="dotEffectType">
+                      <option id="dotOptionDamage" value="damage">Ongoing Damage</option>
+                      <option id="dotOptionHeal" value="heal">Ongoing Heal</option>
+                    </select>
+                    <input id="dotDamage" type="number" min="0" value="0" />
+                  </div>
+                </label>
+                <label class="turns-field">
+                  <span id="dotTurnsLabel">Effect Turns</span>
+                  <input id="dotTurns" class="compact-input" type="number" min="0" value="0" />
+                </label>
+              </div>
+              <label class="panel-section">
+                <span id="actionNoteLabel">Note</span>
+                <textarea id="actionNote" rows="4" placeholder="For example: bleed, curse, burn, armor break"></textarea>
+              </label>
+              <button type="submit" class="primary" disabled id="applyBattleBtn">Resolve Action</button>
+            </form>
+
+            <div class="boss-column">
+              <div class="boss-arena">
+                <div class="boss-aura"></div>
+                <div class="boss-avatar" id="bossAvatar" aria-hidden="true"></div>
+                <div class="boss-nameplate">
+                  <span id="fightBossHpLabel">Boss HP</span>
+                  <strong id="fightBossHp">0</strong>
+                </div>
+              </div>
+              <div class="skill-banner">
+                <strong id="currentSkillName">Awaiting Skill</strong>
+                <span id="currentSkillDesc"></span>
+              </div>
+            </div>
+
+            <div class="fight-side">
+              <div class="fight-status-top">
+                <div class="status-chip"><span id="phaseChipLabel">Phase</span><strong id="phaseLabel">Boss Fight</strong></div>
+                <div class="status-chip"><span id="currentPlayerChipLabel">Current Player</span><strong id="currentPlayer">Player 1</strong></div>
+                <div class="status-chip"><span id="effectCountChipLabel">Ongoing Effects</span><strong id="effectCount">0</strong></div>
+              </div>
+
+              <section class="stage-card side-panel">
+                <h2 id="quickAdjustTitle">Quick Adjust</h2>
+                <div class="button-stack">
+                  <button id="bossDamageBtn" disabled>Boss -1 HP</button>
+                  <button id="bossHealBtn" disabled>Boss +1 HP</button>
+                </div>
+              </section>
+
+              <section class="stage-card side-panel">
+                <h2 id="effectsPanelTitle">Ongoing Effects</h2>
+                <div id="effectsList" class="effects-list muted">No ongoing effects.</div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div class="log-modal hidden" id="logModal">
+          <div class="log-backdrop" id="logBackdrop"></div>
+          <section class="stage-card log-dialog">
+            <div class="log-dialog-head">
+              <h2 id="logTitle">Battle Log</h2>
+              <button id="logCloseBtn" class="log-close" type="button">Close</button>
+            </div>
+            <div id="log" class="log"></div>
+          </section>
+        </div>
+
+        <div class="defeat-cg hidden" id="defeatCg">
+          <div class="defeat-backdrop"></div>
+          <div class="defeat-boss"></div>
+          <div class="defeat-flare"></div>
+          <div class="defeat-panel">
+            <div id="defeatTitle" class="defeat-title">BOSS DEFEATED</div>
+            <button id="defeatCloseBtn" class="log-close" type="button">Close</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="skill-modal hidden" id="skillModal">
+        <div class="log-backdrop" id="skillBackdrop"></div>
+        <section class="stage-card skill-dialog">
+          <div class="log-dialog-head">
+            <h2 id="skillModalTitle">Boss Skills</h2>
+            <button id="skillCloseBtn" class="log-close" type="button">Close</button>
+          </div>
+          <div id="skillList" class="skill-list"></div>
+        </section>
+      </div>
+
+      <div class="language-switch" id="languageSwitch">
+        <button class="lang-btn active" type="button" data-lang="en">EN</button>
+        <button class="lang-btn" type="button" data-lang="zh">中文</button>
+      </div>
+
+      <div class="music-switch" id="musicSwitch">
+        <button class="lang-btn music-btn active" id="musicToggleBtn" type="button">BGM On</button>
+      </div>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+  </html>
