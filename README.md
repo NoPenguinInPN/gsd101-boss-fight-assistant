@@ -9,7 +9,7 @@ A lightweight browser-based helper for running a multi-phase boss encounter. It 
 
 ## Usage
 
-After downloading or cloning the project, open `index.html` directly in your browser.
+After downloading or cloning the project, open [index.html](./index.html) directly in your browser.
 
 If you prefer running it from a local server, use:
 
