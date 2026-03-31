@@ -1,20 +1,33 @@
 # Boss Fight Assistant
 
-A lightweight browser-based helper for running a multi-phase boss encounter. It tracks:
+A browser-based companion for running a multi-phase boss encounter in `GSD101`.
 
-- Boss growth during the first phase while players rotate turns
-- Current round, total turns, and current player
-- Instant effects, ongoing effects, and random Boss skills in the battle phase
-- Manual Boss HP adjustment
+## Live Demo
 
-## Usage
+Open the hosted version here:
 
-After downloading or cloning the project, open [index.html](./index.html) directly in your browser.
+[https://nopenguininpn.github.io/gsd101-boss-fight-assistant/](https://nopenguininpn.github.io/gsd101-boss-fight-assistant/)
 
-If you prefer running it from a local server, use:
+## Features
+
+- Three-stage flow: setup, resource phase, and boss fight
+- Boss HP, round count, turn count, and current player tracking
+- Random boss skills with tiered unlock logic
+- Instant effects, ongoing effects, and quick HP adjustment
+- Animated boss transition sequence, skill library, and battle log
+- English / Chinese language switch
+- Built-in BGM playlists with toggle control
+
+## Local Usage
+
+If you want to run it locally, open [index.html](./index.html) directly in your browser.
+
+You can also serve the folder with a simple local server:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Then visit `http://localhost:8000`.
+Then visit:
+
+`http://localhost:8000`
