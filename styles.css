@@ -26,8 +26,11 @@
 
 body {
   margin: 0;
+  width: 100vw;
   min-height: 100vh;
   height: 100vh;
+  min-height: 100dvh;
+  height: 100dvh;
   overflow: hidden;
   color: var(--text);
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
@@ -115,8 +118,11 @@ textarea::placeholder {
 }
 
 .app-shell {
+  width: 100vw;
   height: 100vh;
+  height: 100dvh;
   position: relative;
+  overflow: hidden;
 }
 
 .language-switch {
@@ -162,8 +168,11 @@ textarea::placeholder {
 }
 
 .transition-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   z-index: 20;
   overflow: hidden;
 }
@@ -193,8 +202,9 @@ textarea::placeholder {
 .transition-scene {
   position: relative;
   z-index: 1;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -202,9 +212,15 @@ textarea::placeholder {
 .transition-blood-drip,
 .transition-blood-line,
 .transition-bat,
+.transition-boss-fragment,
+.transition-word,
+.transition-boss-strip,
 .transition-blur-boss,
+.transition-boss-backpulse,
 .transition-full-boss,
-.transition-echo {
+.transition-echo,
+.transition-afterglow,
+.transition-heartbeat {
   position: absolute;
   opacity: 0;
 }
@@ -553,11 +569,13 @@ textarea::placeholder {
 
 .transition-bat {
   mix-blend-mode: normal;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 .transition-bat {
-  left: 50%;
-  top: 50%;
+  left: var(--bat-left, 50%);
+  top: var(--bat-top, 50%);
   width: 14vmin;
   height: 14vmin;
   margin-left: -7vmin;
@@ -566,40 +584,217 @@ textarea::placeholder {
   background-repeat: no-repeat;
   background-position: var(--bat-position, center);
   background-size: var(--bat-size, contain);
-  filter: var(--bat-filter, brightness(0) saturate(100%) invert(16%) sepia(62%) saturate(2891%) hue-rotate(336deg) brightness(106%) contrast(101%)) blur(1.2px) drop-shadow(0 0 16px rgba(168, 28, 46, 0.24));
+  filter: var(--bat-filter, brightness(0) saturate(100%) invert(15%) sepia(72%) saturate(3344%) hue-rotate(340deg) brightness(115%) contrast(104%)) blur(0.45px) drop-shadow(0 0 14px rgba(194, 44, 58, 0.32));
+}
+
+.transition-boss-fragment,
+.transition-boss-strip {
+  background-image: var(--boss-front), var(--boss-highlights), var(--boss-line), var(--boss-color), var(--boss-back);
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  filter: grayscale(1) saturate(0) brightness(0.82) contrast(1.18);
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.transition-boss-fragment {
+  width: 132vmax;
+  height: 132vmax;
+  top: 50%;
+  margin-top: -66vmax;
+  background-size: 88% auto;
+  filter:
+    grayscale(1)
+    saturate(0)
+    brightness(1.08)
+    contrast(1.26)
+    drop-shadow(0 0 36px rgba(8, 7, 11, 0.34));
+}
+
+.transition-boss-fragment::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  background-image: inherit;
+  background-repeat: no-repeat;
+  background-size: inherit;
+  background-position: inherit;
+}
+
+.transition-boss-fragment-left {
+  left: -58vmax;
+  background-position: center 48%;
+  transform: translateY(-118vh) scale(1.26);
+}
+
+.transition-boss-fragment-right {
+  right: -54vmax;
+  background-position: center 48%;
+  transform: translateY(118vh) scale(1.38);
+}
+
+.transition-boss-fragment-right::after {
+  opacity: 0;
+  transform: scale(1.9);
+  filter: grayscale(1) saturate(0) brightness(0.68) contrast(1.08) blur(5px);
+}
+
+.transition-word {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.88);
+  white-space: nowrap;
+  pointer-events: none;
+  font-family: "Chalkduster", "Dreaming Outloud Script Pro", "Rastanty Cortez", "Baguet Script", cursive;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: rgba(176, 22, 38, 0.96);
+  text-shadow:
+    0 0 8px rgba(82, 10, 19, 0.72),
+    0 0 22px rgba(140, 16, 30, 0.46),
+    0 0 40px rgba(28, 8, 12, 0.52);
+  -webkit-text-stroke: 0.9px rgba(30, 6, 10, 0.78);
+  filter: blur(0.4px);
+}
+
+.transition-word-one {
+  top: 43%;
+  font-size: clamp(4rem, 10vw, 8.8rem);
+}
+
+.transition-word-two {
+  top: 50%;
+  font-size: clamp(3.4rem, 8.4vw, 7rem);
+}
+
+.transition-word-three {
+  top: 58%;
+  font-size: clamp(4.6rem, 11.2vw, 9.6rem);
+}
+
+html[lang="zh-CN"] .transition-word {
+  font-family: "STXingkai", "Kaiti SC", "STKaiti", "KaiTi", cursive;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  -webkit-text-stroke: 0.7px rgba(34, 8, 12, 0.72);
+}
+
+html[lang="zh-CN"] .transition-word-one {
+  font-size: clamp(4.4rem, 10.8vw, 9.4rem);
+}
+
+html[lang="zh-CN"] .transition-word-two {
+  font-size: clamp(4rem, 9.8vw, 8.4rem);
+}
+
+html[lang="zh-CN"] .transition-word-three {
+  font-size: clamp(4.8rem, 11.8vw, 10rem);
+}
+
+.transition-boss-strip {
+  width: 88vw;
+  height: 20vh;
+  left: 6vw;
+  background-size: auto 310%;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 236, 232, 0.04),
+    0 0 30px rgba(14, 8, 11, 0.24);
+}
+
+.transition-boss-strip-upper {
+  top: 36%;
+  clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+  background-position: 52% 26%;
+  transform: translateX(-110vw) skewX(-18deg) scale(0.94);
+}
+
+.transition-boss-strip-lower {
+  top: 58%;
+  clip-path: polygon(0 0, 90% 0, 100% 100%, 10% 100%);
+  background-position: 49% 72%;
+  transform: translateX(110vw) skewX(-18deg) scale(0.94);
 }
 
 .transition-bat-three,
 .transition-bat-six,
 .transition-bat-nine,
-.transition-bat-twelve {
+.transition-bat-twelve,
+.transition-bat-fifteen,
+.transition-bat-eighteen,
+.transition-bat-twenty-one,
+.transition-bat-twenty-four,
+.transition-bat-twenty-seven,
+.transition-bat-thirty,
+.transition-bat-thirty-three,
+.transition-bat-thirty-six {
   --bat-image: var(--transition-bat-outline);
   --bat-size: 600% 200%;
 }
 
 .transition-bat-one,
-.transition-bat-four,
-.transition-bat-seven,
-.transition-bat-ten {
-  --bat-filter: brightness(0) saturate(100%) invert(23%) sepia(80%) saturate(2599%) hue-rotate(338deg) brightness(108%) contrast(100%);
-}
-
 .transition-bat-two,
-.transition-bat-five,
-.transition-bat-eight,
-.transition-bat-eleven {
-  --bat-filter: brightness(0) saturate(100%) invert(16%) sepia(62%) saturate(2891%) hue-rotate(336deg) brightness(106%) contrast(101%);
-}
-
 .transition-bat-three,
-.transition-bat-six,
+.transition-bat-four,
+.transition-bat-five,
+.transition-bat-six {
+  --bat-filter: brightness(0) saturate(100%) invert(25%) sepia(84%) saturate(3025%) hue-rotate(341deg) brightness(112%) contrast(99%);
+}
+
+.transition-bat-seven,
+.transition-bat-eight,
 .transition-bat-nine,
+.transition-bat-ten,
+.transition-bat-eleven,
 .transition-bat-twelve {
-  --bat-filter: brightness(0) saturate(100%) invert(10%) sepia(44%) saturate(1785%) hue-rotate(333deg) brightness(92%) contrast(109%);
+  --bat-filter: brightness(0) saturate(100%) invert(21%) sepia(78%) saturate(2748%) hue-rotate(339deg) brightness(108%) contrast(101%);
+}
+
+.transition-bat-thirteen,
+.transition-bat-fourteen,
+.transition-bat-fifteen,
+.transition-bat-sixteen,
+.transition-bat-seventeen,
+.transition-bat-eighteen {
+  --bat-filter: brightness(0) saturate(100%) invert(18%) sepia(71%) saturate(2572%) hue-rotate(337deg) brightness(103%) contrast(103%);
+}
+
+.transition-bat-nineteen,
+.transition-bat-twenty,
+.transition-bat-twenty-one,
+.transition-bat-twenty-two,
+.transition-bat-twenty-three,
+.transition-bat-twenty-four {
+  --bat-filter: brightness(0) saturate(100%) invert(15%) sepia(66%) saturate(2345%) hue-rotate(336deg) brightness(99%) contrast(104%);
+}
+
+.transition-bat-twenty-five,
+.transition-bat-twenty-six,
+.transition-bat-twenty-seven,
+.transition-bat-twenty-eight,
+.transition-bat-twenty-nine,
+.transition-bat-thirty {
+  --bat-filter: brightness(0) saturate(100%) invert(12%) sepia(55%) saturate(2022%) hue-rotate(334deg) brightness(94%) contrast(106%);
+}
+
+.transition-bat-thirty-one,
+.transition-bat-thirty-two,
+.transition-bat-thirty-three,
+.transition-bat-thirty-four,
+.transition-bat-thirty-five,
+.transition-bat-thirty-six {
+  --bat-filter: brightness(0) saturate(100%) invert(10%) sepia(45%) saturate(1762%) hue-rotate(332deg) brightness(89%) contrast(108%);
 }
 
 .transition-bat-two,
-.transition-bat-eight {
+.transition-bat-eight,
+.transition-bat-fourteen,
+.transition-bat-twenty,
+.transition-bat-twenty-six,
+.transition-bat-thirty-two {
   width: 10vmin;
   height: 10vmin;
   margin-left: -5vmin;
@@ -607,7 +802,11 @@ textarea::placeholder {
 }
 
 .transition-bat-five,
-.transition-bat-eleven {
+.transition-bat-eleven,
+.transition-bat-seventeen,
+.transition-bat-twenty-three,
+.transition-bat-twenty-nine,
+.transition-bat-thirty-five {
   width: 12vmin;
   height: 12vmin;
   margin-left: -6vmin;
@@ -615,22 +814,30 @@ textarea::placeholder {
 }
 
 .transition-bat-three,
-.transition-bat-nine {
+.transition-bat-nine,
+.transition-bat-fifteen,
+.transition-bat-twenty-one,
+.transition-bat-twenty-seven,
+.transition-bat-thirty-three {
   width: 18vmin;
   height: 18vmin;
   margin-left: -9vmin;
   margin-top: -9vmin;
   --bat-position: 0% 0%;
-  filter: var(--bat-filter) blur(2px) drop-shadow(0 0 18px rgba(140, 24, 38, 0.2));
+  filter: var(--bat-filter) blur(0.85px) drop-shadow(0 0 18px rgba(188, 36, 52, 0.26));
 }
 
 .transition-bat-six,
-.transition-bat-twelve {
+.transition-bat-twelve,
+.transition-bat-eighteen,
+.transition-bat-twenty-four,
+.transition-bat-thirty,
+.transition-bat-thirty-six {
   width: 20vmin;
   height: 20vmin;
   margin-left: -10vmin;
   margin-top: -10vmin;
-  filter: var(--bat-filter) blur(3px) drop-shadow(0 0 22px rgba(116, 20, 34, 0.16));
+  filter: var(--bat-filter) blur(1.2px) drop-shadow(0 0 22px rgba(176, 32, 48, 0.22));
 }
 
 .transition-bat-six {
@@ -643,6 +850,122 @@ textarea::placeholder {
 
 .transition-bat-twelve {
   --bat-position: 60% 0%;
+}
+
+.transition-bat-fifteen {
+  --bat-position: 0% 0%;
+}
+
+.transition-bat-eighteen {
+  --bat-position: 20% 0%;
+}
+
+.transition-bat-twenty-one {
+  --bat-position: 40% 0%;
+}
+
+.transition-bat-twenty-four {
+  --bat-position: 60% 0%;
+}
+
+.transition-bat-twenty-seven {
+  --bat-position: 0% 0%;
+}
+
+.transition-bat-thirty {
+  --bat-position: 20% 0%;
+}
+
+.transition-bat-thirty-three {
+  --bat-position: 40% 0%;
+}
+
+.transition-bat-thirty-six {
+  --bat-position: 60% 0%;
+}
+
+.transition-bat-one,
+.transition-bat-thirteen,
+.transition-bat-twenty-five {
+  --bat-left: 18%;
+  --bat-top: 28%;
+}
+
+.transition-bat-two,
+.transition-bat-fourteen,
+.transition-bat-twenty-six {
+  --bat-left: 34%;
+  --bat-top: 18%;
+}
+
+.transition-bat-three,
+.transition-bat-fifteen,
+.transition-bat-twenty-seven {
+  --bat-left: 52%;
+  --bat-top: 24%;
+}
+
+.transition-bat-four,
+.transition-bat-sixteen,
+.transition-bat-twenty-eight {
+  --bat-left: 72%;
+  --bat-top: 16%;
+}
+
+.transition-bat-five,
+.transition-bat-seventeen,
+.transition-bat-twenty-nine {
+  --bat-left: 84%;
+  --bat-top: 34%;
+}
+
+.transition-bat-six,
+.transition-bat-eighteen,
+.transition-bat-thirty {
+  --bat-left: 76%;
+  --bat-top: 56%;
+}
+
+.transition-bat-seven,
+.transition-bat-nineteen,
+.transition-bat-thirty-one {
+  --bat-left: 62%;
+  --bat-top: 76%;
+}
+
+.transition-bat-eight,
+.transition-bat-twenty,
+.transition-bat-thirty-two {
+  --bat-left: 42%;
+  --bat-top: 70%;
+}
+
+.transition-bat-nine,
+.transition-bat-twenty-one,
+.transition-bat-thirty-three {
+  --bat-left: 24%;
+  --bat-top: 78%;
+}
+
+.transition-bat-ten,
+.transition-bat-twenty-two,
+.transition-bat-thirty-four {
+  --bat-left: 12%;
+  --bat-top: 58%;
+}
+
+.transition-bat-eleven,
+.transition-bat-twenty-three,
+.transition-bat-thirty-five {
+  --bat-left: 28%;
+  --bat-top: 48%;
+}
+
+.transition-bat-twelve,
+.transition-bat-twenty-four,
+.transition-bat-thirty-six {
+  --bat-left: 58%;
+  --bat-top: 46%;
 }
 
 .transition-panel {
@@ -759,11 +1082,13 @@ textarea::placeholder {
 }
 
 .transition-full-boss {
-  filter: brightness(0.9);
+  filter: brightness(1);
+  z-index: 3;
 }
 
 .transition-echo {
   mix-blend-mode: screen;
+  z-index: 2;
 }
 
 .transition-echo-one {
@@ -779,7 +1104,9 @@ textarea::placeholder {
 }
 
 .transition-focus-ring,
-.transition-flash {
+.transition-flash,
+.transition-afterglow,
+.transition-heartbeat {
   position: absolute;
   inset: 0;
   opacity: 0;
@@ -793,8 +1120,63 @@ textarea::placeholder {
 
 .transition-flash {
   background:
-    radial-gradient(circle at center, rgba(227, 81, 74, 0.18), transparent 22%),
-    linear-gradient(90deg, transparent 0%, rgba(255, 164, 132, 0.08) 50%, transparent 100%);
+    linear-gradient(90deg, transparent 0%, rgba(255, 164, 132, 0.06) 50%, transparent 100%);
+}
+
+.transition-afterglow {
+  background:
+    radial-gradient(circle at center, transparent 18%, rgba(196, 28, 44, 0.28) 21%, transparent 25%),
+    radial-gradient(circle at center, transparent 34%, rgba(138, 16, 30, 0.22) 37%, transparent 42%),
+    radial-gradient(circle at center, transparent 52%, rgba(94, 10, 20, 0.14) 55%, transparent 60%),
+    linear-gradient(180deg, rgba(86, 10, 20, 0.12), transparent 24%, transparent 76%, rgba(86, 10, 20, 0.14));
+}
+
+.transition-heartbeat {
+  background:
+    radial-gradient(circle at center, transparent 22%, rgba(212, 34, 50, 0.22) 25%, transparent 30%),
+    radial-gradient(circle at center, transparent 40%, rgba(148, 14, 28, 0.16) 43%, transparent 48%),
+    radial-gradient(circle at center, transparent 60%, rgba(96, 10, 20, 0.1) 63%, transparent 68%),
+    linear-gradient(180deg, rgba(88, 10, 22, 0.1), transparent 22%, transparent 78%, rgba(88, 10, 22, 0.12));
+}
+
+.transition-boss-backpulse {
+  left: 50%;
+  top: 50%;
+  inset: auto;
+  width: min(108vmin, 1320px);
+  height: min(108vmin, 1320px);
+  margin-left: calc(min(108vmin, 1320px) / -2);
+  margin-top: calc(min(108vmin, 1320px) / -2);
+  background-image: var(--boss-front), var(--boss-highlights), var(--boss-line), var(--boss-color), var(--boss-back);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: grayscale(1) saturate(0) brightness(2.3) contrast(0.76) blur(16px);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.transition-boss-backpulse::before,
+.transition-boss-backpulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--boss-front), var(--boss-highlights), var(--boss-line), var(--boss-color), var(--boss-back);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.transition-boss-backpulse::before {
+  filter: grayscale(1) saturate(0) brightness(2.7) contrast(0.68) blur(18px);
+}
+
+.transition-boss-backpulse::after {
+  filter: grayscale(1) saturate(0) brightness(2.2) contrast(0.72) blur(20px);
 }
 
 .transition-overlay.phase-gather .transition-backdrop {
@@ -866,75 +1248,215 @@ textarea::placeholder {
 }
 
 .transition-overlay.phase-fight .transition-bat-one {
-  animation: batBurstOne 1220ms cubic-bezier(0.2, 1, 0.22, 1) 80ms forwards;
+  animation: batBurstOne 2220ms cubic-bezier(0.2, 1, 0.22, 1) 100ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-bat-two {
-  animation: batBurstTwo 1240ms cubic-bezier(0.2, 1, 0.22, 1) 140ms forwards;
+  animation: batBurstTwo 2280ms cubic-bezier(0.2, 1, 0.22, 1) 180ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-bat-three {
-  animation: batBurstThree 1180ms cubic-bezier(0.2, 1, 0.22, 1) 220ms forwards;
+  animation: batBurstThree 2180ms cubic-bezier(0.2, 1, 0.22, 1) 560ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-bat-four {
-  animation: batBurstFour 1260ms cubic-bezier(0.2, 1, 0.22, 1) 300ms forwards;
+  animation: batBurstFour 2300ms cubic-bezier(0.2, 1, 0.22, 1) 660ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-bat-five {
-  animation: batBurstFive 1240ms cubic-bezier(0.2, 1, 0.22, 1) 640ms forwards;
+  animation: batBurstFive 2240ms cubic-bezier(0.2, 1, 0.22, 1) 1060ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-bat-six {
-  animation: batBurstSix 1260ms cubic-bezier(0.2, 1, 0.22, 1) 720ms forwards;
+  animation: batBurstSix 2320ms cubic-bezier(0.2, 1, 0.22, 1) 1160ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-bat-seven {
-  animation: batBurstSeven 1180ms cubic-bezier(0.2, 1, 0.22, 1) 800ms forwards;
+  animation: batBurstSeven 2140ms cubic-bezier(0.2, 1, 0.22, 1) 1560ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-bat-eight {
-  animation: batBurstEight 1200ms cubic-bezier(0.2, 1, 0.22, 1) 880ms forwards;
+  animation: batBurstEight 2200ms cubic-bezier(0.2, 1, 0.22, 1) 1660ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-bat-nine {
-  animation: batBurstNine 1320ms cubic-bezier(0.2, 1, 0.22, 1) 1180ms forwards;
+  animation: batBurstNine 2360ms cubic-bezier(0.2, 1, 0.22, 1) 2060ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-bat-ten {
-  animation: batBurstTen 1240ms cubic-bezier(0.2, 1, 0.22, 1) 1260ms forwards;
+  animation: batBurstTen 2260ms cubic-bezier(0.2, 1, 0.22, 1) 2160ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-bat-eleven {
-  animation: batBurstEleven 1200ms cubic-bezier(0.2, 1, 0.22, 1) 1340ms forwards;
+  animation: batBurstEleven 2240ms cubic-bezier(0.2, 1, 0.22, 1) 2560ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-bat-twelve {
-  animation: batBurstTwelve 1320ms cubic-bezier(0.2, 1, 0.22, 1) 1420ms forwards;
+  animation: batBurstTwelve 2380ms cubic-bezier(0.2, 1, 0.22, 1) 2660ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-thirteen {
+  animation: batBurstOne 2220ms cubic-bezier(0.2, 1, 0.22, 1) 3180ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-fourteen {
+  animation: batBurstTwo 2280ms cubic-bezier(0.2, 1, 0.22, 1) 3260ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-fifteen {
+  animation: batBurstThree 2180ms cubic-bezier(0.2, 1, 0.22, 1) 3340ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-sixteen {
+  animation: batBurstFour 2300ms cubic-bezier(0.2, 1, 0.22, 1) 3420ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-seventeen {
+  animation: batBurstFive 2240ms cubic-bezier(0.2, 1, 0.22, 1) 3500ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-eighteen {
+  animation: batBurstSix 2320ms cubic-bezier(0.2, 1, 0.22, 1) 3580ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-nineteen {
+  animation: batBurstSeven 2140ms cubic-bezier(0.2, 1, 0.22, 1) 4020ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-twenty {
+  animation: batBurstEight 2200ms cubic-bezier(0.2, 1, 0.22, 1) 4100ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-twenty-one {
+  animation: batBurstNine 2360ms cubic-bezier(0.2, 1, 0.22, 1) 4180ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-twenty-two {
+  animation: batBurstTen 2260ms cubic-bezier(0.2, 1, 0.22, 1) 4260ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-twenty-three {
+  animation: batBurstEleven 2240ms cubic-bezier(0.2, 1, 0.22, 1) 4340ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-twenty-four {
+  animation: batBurstTwelve 2380ms cubic-bezier(0.2, 1, 0.22, 1) 4420ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-twenty-five {
+  animation: batBurstOne 2220ms cubic-bezier(0.2, 1, 0.22, 1) 4860ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-twenty-six {
+  animation: batBurstTwo 2280ms cubic-bezier(0.2, 1, 0.22, 1) 4940ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-twenty-seven {
+  animation: batBurstThree 2180ms cubic-bezier(0.2, 1, 0.22, 1) 5020ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-twenty-eight {
+  animation: batBurstFour 2300ms cubic-bezier(0.2, 1, 0.22, 1) 5100ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-twenty-nine {
+  animation: batBurstFive 2240ms cubic-bezier(0.2, 1, 0.22, 1) 5180ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-thirty {
+  animation: batBurstSix 2320ms cubic-bezier(0.2, 1, 0.22, 1) 5260ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-thirty-one {
+  animation: batBurstSeven 2140ms cubic-bezier(0.2, 1, 0.22, 1) 5700ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-thirty-two {
+  animation: batBurstEight 2200ms cubic-bezier(0.2, 1, 0.22, 1) 5780ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-thirty-three {
+  animation: batBurstNine 2360ms cubic-bezier(0.2, 1, 0.22, 1) 5860ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-thirty-four {
+  animation: batBurstTen 2260ms cubic-bezier(0.2, 1, 0.22, 1) 5940ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-thirty-five {
+  animation: batBurstEleven 2240ms cubic-bezier(0.2, 1, 0.22, 1) 6020ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-bat-thirty-six {
+  animation: batBurstTwelve 2380ms cubic-bezier(0.2, 1, 0.22, 1) 6100ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-boss-fragment-left {
+  animation: bossFragmentLeft 1640ms cubic-bezier(0.2, 0.96, 0.24, 1) 2920ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-boss-fragment-right {
+  animation: bossFragmentRight 1880ms cubic-bezier(0.2, 0.96, 0.24, 1) 4320ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-boss-fragment-right::after {
+  animation: bossFragmentRightShadow 1880ms cubic-bezier(0.2, 0.96, 0.24, 1) 4320ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-word-one {
+  animation: transitionWordReveal 1040ms cubic-bezier(0.2, 0.96, 0.24, 1) 6620ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-word-two {
+  animation: transitionWordReveal 1040ms cubic-bezier(0.2, 0.96, 0.24, 1) 7640ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-word-three {
+  animation: transitionWordReveal 1260ms cubic-bezier(0.2, 0.96, 0.24, 1) 8660ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-backdrop {
-  animation: fightTransitionBackdrop 4000ms ease forwards;
+  animation: fightTransitionBackdrop 15200ms ease forwards;
 }
 
 .transition-overlay.phase-fight .transition-echo-one {
-  animation: echoOne 1120ms ease 2520ms forwards;
+  animation: echoOne 1360ms ease 11120ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-echo-two {
-  animation: echoTwo 1180ms ease 2600ms forwards;
+  animation: echoTwo 1440ms ease 11240ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-echo-three {
-  animation: echoThree 1180ms ease 2680ms forwards;
+  animation: echoThree 1440ms ease 11360ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-full-boss {
-  animation: bossEntrance 1320ms cubic-bezier(0.2, 1, 0.22, 1) 2440ms forwards;
+  animation: bossEntrance 2140ms cubic-bezier(0.18, 1, 0.22, 1) 10960ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-focus-ring {
-  animation: focusPulse 860ms ease 2620ms forwards;
+  animation: focusPulse 1120ms ease 11420ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-afterglow {
+  animation: afterglowHold 2000ms ease 13180ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-heartbeat {
+  animation: heartbeatPulse 2000ms ease 13160ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-boss-backpulse {
+  animation: bossBackpulse 980ms cubic-bezier(0.18, 0.92, 0.24, 1) 13220ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-boss-backpulse::before {
+  animation: bossBackpulseEchoOne 980ms cubic-bezier(0.18, 0.92, 0.24, 1) 13220ms forwards;
+}
+
+.transition-overlay.phase-fight .transition-boss-backpulse::after {
+  animation: bossBackpulseEchoTwo 980ms cubic-bezier(0.18, 0.92, 0.24, 1) 13220ms forwards;
 }
 
 .transition-overlay.phase-fight .transition-flash {
@@ -944,6 +1466,7 @@ textarea::placeholder {
 .screen {
   display: none;
   height: 100vh;
+  height: 100dvh;
   position: relative;
   padding: 16px;
 }
@@ -1162,6 +1685,17 @@ label {
   text-align: center;
 }
 
+.boss-stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: min(100%, 320px);
+}
+
+.boss-damage-plate strong {
+  color: var(--accent-2);
+}
+
 .skill-banner {
   width: 100%;
   min-height: 72px;
@@ -1183,17 +1717,22 @@ label {
   color: var(--muted);
 }
 
+.skill-banner.ultimate-flare {
+  border-color: rgba(214, 58, 58, 0.42);
+  box-shadow: 0 0 22px rgba(175, 28, 36, 0.28), inset 0 0 24px rgba(122, 18, 24, 0.18);
+}
+
 .fight-layout {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(300px, 0.94fr) minmax(390px, 1.22fr) minmax(300px, 0.94fr);
+  grid-template-columns: minmax(300px, 0.95fr) minmax(390px, 1.24fr) minmax(280px, 0.82fr);
   gap: 14px;
   align-items: stretch;
 }
 
 .fight-panel,
 .side-panel {
-  padding: 14px;
+  padding: 12px;
 }
 
 .fight-panel,
@@ -1284,12 +1823,21 @@ label {
 
 .fight-side {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
-.button-stack {
+.button-stack,
+.button-row {
   display: grid;
   gap: 8px;
+}
+
+.button-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.button-row button {
+  padding-inline: 10px;
 }
 
 .boss-column {
@@ -1302,12 +1850,12 @@ label {
 .fight-status-top {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 
 .effects-list,
 .log {
-  min-height: 88px;
+  min-height: 72px;
   display: grid;
   gap: 8px;
 }
@@ -1317,6 +1865,17 @@ label {
   padding: 10px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.effect-item-damage {
+  border-color: rgba(230, 92, 82, 0.36);
+  box-shadow: inset 0 0 0 1px rgba(230, 92, 82, 0.08);
+}
+
+.effect-item-heal {
+  border-color: rgba(98, 199, 131, 0.34);
+  box-shadow: inset 0 0 0 1px rgba(98, 199, 131, 0.08);
 }
 
 .effect-item strong {
@@ -1497,6 +2056,10 @@ label {
 
 .boss-avatar.cast {
   animation: bossCast 680ms ease;
+}
+
+.boss-avatar.ultimate-flare {
+  filter: drop-shadow(0 0 18px rgba(190, 34, 44, 0.72)) drop-shadow(0 0 34px rgba(120, 8, 18, 0.54));
 }
 
 @keyframes pageIn {
@@ -1690,34 +2253,106 @@ label {
 @keyframes fightTransitionBackdrop {
   0% {
     transform: scale(1.12);
-    filter: blur(12px) saturate(0.68) brightness(0.52);
+    filter: blur(12px) saturate(0.72) brightness(0.4);
     background:
-      linear-gradient(180deg, rgba(30, 16, 19, 0.98), rgba(16, 11, 14, 0.96)),
-      linear-gradient(135deg, rgba(164, 28, 49, 0.2), rgba(16, 12, 18, 0.1)),
+      linear-gradient(180deg, rgba(18, 11, 15, 0.99), rgba(8, 7, 10, 0.98)),
+      linear-gradient(135deg, rgba(120, 18, 34, 0.16), rgba(12, 9, 13, 0.08)),
       var(--transition-texture);
   }
-  38% {
+  12% {
+    transform: scale(1.1);
+    filter: blur(10px) saturate(0.8) brightness(0.44);
+    background:
+      linear-gradient(180deg, rgba(34, 13, 20, 0.98), rgba(12, 8, 12, 0.97)),
+      linear-gradient(135deg, rgba(146, 22, 40, 0.26), rgba(16, 10, 14, 0.1)),
+      var(--transition-texture);
+  }
+  24% {
+    transform: scale(1.085);
+    filter: blur(9px) saturate(0.9) brightness(0.48);
+    background:
+      linear-gradient(180deg, rgba(54, 15, 23, 0.98), rgba(20, 9, 14, 0.96)),
+      linear-gradient(135deg, rgba(168, 26, 46, 0.38), rgba(24, 10, 16, 0.14)),
+      var(--transition-texture);
+  }
+  28% {
     transform: scale(1.08);
-    filter: blur(8px) saturate(0.82) brightness(0.46);
+    filter: blur(9px) saturate(0.92) brightness(0.48);
     background:
-      linear-gradient(180deg, rgba(42, 18, 24, 0.96), rgba(22, 12, 17, 0.92)),
-      linear-gradient(135deg, rgba(154, 24, 47, 0.32), rgba(20, 12, 17, 0.18)),
+      linear-gradient(180deg, rgba(62, 16, 24, 0.97), rgba(22, 9, 15, 0.95)),
+      linear-gradient(135deg, rgba(175, 28, 49, 0.42), rgba(28, 11, 16, 0.16)),
       var(--transition-texture);
   }
-  68% {
-    transform: scale(1.03);
-    filter: blur(5px) saturate(0.94) brightness(0.34);
+  40% {
+    transform: scale(1.055);
+    filter: blur(7px) saturate(1) brightness(0.5);
     background:
-      linear-gradient(180deg, rgba(34, 12, 18, 0.94), rgba(14, 10, 15, 0.98)),
-      linear-gradient(135deg, rgba(174, 28, 55, 0.42), rgba(14, 8, 13, 0.38)),
+      linear-gradient(180deg, rgba(88, 18, 30, 0.98), rgba(32, 10, 18, 0.96)),
+      linear-gradient(135deg, rgba(198, 28, 54, 0.54), rgba(36, 10, 18, 0.2)),
+      var(--transition-texture);
+  }
+  58% {
+    transform: scale(1.03);
+    filter: blur(6px) saturate(1.14) brightness(0.54);
+    background:
+      linear-gradient(180deg, rgba(126, 18, 36, 0.99), rgba(42, 11, 20, 0.98)),
+      linear-gradient(135deg, rgba(224, 30, 60, 0.62), rgba(44, 10, 19, 0.24)),
+      var(--transition-texture);
+  }
+  66% {
+    transform: scale(1.028);
+    filter: blur(5.5px) saturate(1.18) brightness(0.58);
+    background:
+      linear-gradient(180deg, rgba(138, 18, 38, 0.99), rgba(46, 11, 20, 0.98)),
+      linear-gradient(135deg, rgba(232, 30, 62, 0.66), rgba(46, 10, 20, 0.24)),
+      var(--transition-texture);
+  }
+  72% {
+    transform: scale(1.025);
+    filter: blur(5px) saturate(1.16) brightness(0.56);
+    background:
+      linear-gradient(180deg, rgba(146, 18, 40, 0.99), rgba(48, 11, 20, 0.98)),
+      linear-gradient(135deg, rgba(238, 28, 62, 0.68), rgba(48, 10, 20, 0.22)),
+      var(--transition-texture);
+  }
+  76% {
+    transform: scale(1.023);
+    filter: blur(4.8px) saturate(1.08) brightness(0.42);
+    background:
+      linear-gradient(180deg, rgba(98, 15, 31, 0.98), rgba(26, 9, 16, 0.98)),
+      linear-gradient(135deg, rgba(176, 24, 50, 0.34), rgba(18, 8, 14, 0.2)),
+      var(--transition-texture);
+  }
+  80% {
+    transform: scale(1.018);
+    filter: blur(4.2px) saturate(0.98) brightness(0.28);
+    background:
+      linear-gradient(180deg, rgba(42, 10, 19, 0.98), rgba(12, 7, 12, 1)),
+      linear-gradient(135deg, rgba(82, 12, 26, 0.18), rgba(10, 7, 11, 0.18)),
+      var(--transition-texture);
+  }
+  84% {
+    transform: scale(1.01);
+    filter: blur(4px) saturate(0.92) brightness(0.2);
+    background:
+      linear-gradient(180deg, rgba(18, 8, 13, 0.98), rgba(7, 5, 9, 1)),
+      linear-gradient(135deg, rgba(28, 8, 13, 0.14), rgba(8, 6, 10, 0.12)),
+      var(--transition-texture);
+  }
+  90% {
+    transform: scale(1.005);
+    filter: blur(4px) saturate(0.92) brightness(0.2);
+    background:
+      linear-gradient(180deg, rgba(15, 8, 12, 0.98), rgba(7, 5, 9, 1)),
+      linear-gradient(135deg, rgba(24, 8, 13, 0.12), rgba(8, 6, 10, 0.14)),
       var(--transition-texture);
   }
   100% {
     transform: scale(1);
-    filter: blur(4px) saturate(1.04) brightness(0.22);
+    filter: blur(4px) saturate(0.94) brightness(0.2);
     background:
-      linear-gradient(180deg, rgba(18, 9, 14, 0.94), rgba(7, 5, 9, 1)),
-      linear-gradient(135deg, rgba(186, 30, 58, 0.3), rgba(13, 7, 12, 0.46)),
+      linear-gradient(180deg, rgba(14, 8, 12, 0.96), rgba(7, 5, 9, 1)),
+      linear-gradient(135deg, rgba(24, 8, 13, 0.12), rgba(10, 7, 12, 0.16)),
       var(--transition-texture);
   }
 }
@@ -1815,192 +2450,611 @@ label {
 @keyframes batBurstOne {
   0% {
     opacity: 0;
-    transform: translate(-2vw, 1vh) scale(0.24) rotate(-12deg);
-    filter: blur(6px) drop-shadow(0 0 10px rgba(166, 30, 46, 0.18));
+    transform: translate(-4vw, 2vh) scale(0.24) rotate(-12deg);
   }
-  18% {
-    opacity: 0.5;
+  10% {
+    opacity: 0.54;
+  }
+  28% {
+    opacity: 0.44;
+    transform: translate(-28vw, -18vh) scale(0.92) rotate(-12deg);
+  }
+  42% {
+    opacity: 0;
+    transform: translate(-88vw, -68vh) scale(1.28) rotate(-22deg);
+  }
+  50% {
+    opacity: 0;
+    transform: translate(22vw, 18vh) scale(0.34) rotate(18deg);
+  }
+  62% {
+    opacity: 0.46;
+  }
+  82% {
+    opacity: 0.34;
+    transform: translate(58vw, 38vh) scale(1.04) rotate(26deg);
   }
   100% {
     opacity: 0;
-    transform: translate(-36vw, -26vh) scale(1.22) rotate(-18deg);
-    filter: blur(1.2px) drop-shadow(0 0 14px rgba(176, 34, 50, 0.22));
+    transform: translate(112vw, 72vh) scale(1.38) rotate(34deg);
   }
 }
 
 @keyframes batBurstTwo {
   0% {
     opacity: 0;
-    transform: translate(1vw, -1vh) scale(0.28) rotate(8deg);
-    filter: blur(7px);
+    transform: translate(2vw, -2vh) scale(0.28) rotate(8deg);
   }
-  20% {
+  10% {
     opacity: 0.68;
+  }
+  28% {
+    opacity: 0.44;
+    transform: translate(26vw, -16vh) scale(0.94) rotate(12deg);
+  }
+  42% {
+    opacity: 0;
+    transform: translate(92vw, -64vh) scale(1.24) rotate(20deg);
+  }
+  50% {
+    opacity: 0;
+    transform: translate(-18vw, 16vh) scale(0.32) rotate(-16deg);
+  }
+  62% {
+    opacity: 0.48;
+  }
+  82% {
+    opacity: 0.34;
+    transform: translate(-56vw, 34vh) scale(1.02) rotate(-24deg);
   }
   100% {
     opacity: 0;
-    transform: translate(38vw, -20vh) scale(1.16) rotate(16deg);
-    filter: blur(1px) drop-shadow(0 0 12px rgba(170, 34, 48, 0.2));
+    transform: translate(-110vw, 68vh) scale(1.34) rotate(-32deg);
   }
 }
 
 @keyframes batBurstThree {
   0% {
     opacity: 0;
-    transform: translate(0, 0) scale(0.2) rotate(-4deg);
-    filter: blur(5px);
+    transform: translate(-1vw, -1vh) scale(0.2) rotate(-4deg);
   }
-  16% {
+  10% {
     opacity: 0.7;
+  }
+  26% {
+    opacity: 0.42;
+    transform: translate(-18vw, 26vh) scale(0.88) rotate(10deg);
+  }
+  40% {
+    opacity: 0;
+    transform: translate(-72vw, 96vh) scale(1.22) rotate(18deg);
+  }
+  50% {
+    opacity: 0;
+    transform: translate(18vw, -24vh) scale(0.3) rotate(-14deg);
+  }
+  62% {
+    opacity: 0.5;
+  }
+  82% {
+    opacity: 0.34;
+    transform: translate(52vw, -46vh) scale(0.98) rotate(-26deg);
   }
   100% {
     opacity: 0;
-    transform: translate(-24vw, 28vh) scale(1.08) rotate(10deg);
-    filter: blur(1px);
+    transform: translate(108vw, -90vh) scale(1.28) rotate(-36deg);
   }
 }
 
 @keyframes batBurstFour {
   0% {
     opacity: 0;
-    transform: translate(1vw, 1vh) scale(0.26) rotate(14deg);
-    filter: blur(6px);
+    transform: translate(2vw, 2vh) scale(0.26) rotate(14deg);
   }
-  18% {
+  10% {
     opacity: 0.64;
+  }
+  28% {
+    opacity: 0.42;
+    transform: translate(20vw, 22vh) scale(0.92) rotate(14deg);
+  }
+  42% {
+    opacity: 0;
+    transform: translate(78vw, 88vh) scale(1.28) rotate(24deg);
+  }
+  50% {
+    opacity: 0;
+    transform: translate(-16vw, -22vh) scale(0.34) rotate(-18deg);
+  }
+  62% {
+    opacity: 0.48;
+  }
+  82% {
+    opacity: 0.34;
+    transform: translate(-48vw, -44vh) scale(1.04) rotate(-28deg);
   }
   100% {
     opacity: 0;
-    transform: translate(30vw, 24vh) scale(1.18) rotate(-8deg);
-    filter: blur(1.4px);
+    transform: translate(-106vw, -86vh) scale(1.34) rotate(-38deg);
   }
 }
 
 @keyframes batBurstFive {
   0% {
     opacity: 0;
-    transform: translate(-1vw, 0) scale(0.22) rotate(-18deg);
-    filter: blur(6px);
+    transform: translate(-2vw, 0) scale(0.22) rotate(-18deg);
   }
-  22% {
+  10% {
     opacity: 0.72;
+  }
+  30% {
+    opacity: 0.44;
+    transform: translate(-30vw, 10vh) scale(0.96) rotate(-18deg);
+  }
+  44% {
+    opacity: 0;
+    transform: translate(-102vw, 30vh) scale(1.34) rotate(-30deg);
+  }
+  52% {
+    opacity: 0;
+    transform: translate(20vw, -12vh) scale(0.34) rotate(10deg);
+  }
+  64% {
+    opacity: 0.46;
+  }
+  84% {
+    opacity: 0.32;
+    transform: translate(64vw, -28vh) scale(1.08) rotate(18deg);
   }
   100% {
     opacity: 0;
-    transform: translate(-42vw, 4vh) scale(1.28) rotate(-24deg);
-    filter: blur(1.2px);
+    transform: translate(118vw, -56vh) scale(1.42) rotate(28deg);
   }
 }
 
 @keyframes batBurstSix {
   0% {
     opacity: 0;
-    transform: translate(2vw, 0) scale(0.26) rotate(18deg);
-    filter: blur(6px);
+    transform: translate(3vw, 0) scale(0.26) rotate(18deg);
   }
-  22% {
+  10% {
     opacity: 0.7;
+  }
+  30% {
+    opacity: 0.42;
+    transform: translate(30vw, 8vh) scale(0.94) rotate(18deg);
+  }
+  44% {
+    opacity: 0;
+    transform: translate(104vw, 24vh) scale(1.3) rotate(30deg);
+  }
+  52% {
+    opacity: 0;
+    transform: translate(-18vw, -14vh) scale(0.34) rotate(-10deg);
+  }
+  64% {
+    opacity: 0.48;
+  }
+  84% {
+    opacity: 0.32;
+    transform: translate(-60vw, -32vh) scale(1.04) rotate(-18deg);
   }
   100% {
     opacity: 0;
-    transform: translate(44vw, 2vh) scale(1.2) rotate(24deg);
-    filter: blur(1.2px);
+    transform: translate(-116vw, -58vh) scale(1.36) rotate(-28deg);
   }
 }
 
 @keyframes batBurstSeven {
   0% {
     opacity: 0;
-    transform: translate(0, 0) scale(0.22) rotate(-10deg);
-    filter: blur(5px);
+    transform: translate(0, -2vh) scale(0.22) rotate(-10deg);
   }
-  18% {
+  10% {
     opacity: 0.68;
+  }
+  28% {
+    opacity: 0.4;
+    transform: translate(-16vw, -30vh) scale(0.88) rotate(-14deg);
+  }
+  42% {
+    opacity: 0;
+    transform: translate(-56vw, -104vh) scale(1.2) rotate(-26deg);
+  }
+  50% {
+    opacity: 0;
+    transform: translate(18vw, 20vh) scale(0.32) rotate(14deg);
+  }
+  62% {
+    opacity: 0.44;
+  }
+  82% {
+    opacity: 0.3;
+    transform: translate(48vw, 56vh) scale(1) rotate(24deg);
   }
   100% {
     opacity: 0;
-    transform: translate(-14vw, -34vh) scale(1.06) rotate(-22deg);
-    filter: blur(1px);
+    transform: translate(94vw, 116vh) scale(1.28) rotate(34deg);
   }
 }
 
 @keyframes batBurstEight {
   0% {
     opacity: 0;
-    transform: translate(0, 0) scale(0.22) rotate(12deg);
-    filter: blur(4px);
+    transform: translate(1vw, -1vh) scale(0.22) rotate(12deg);
   }
-  20% {
+  10% {
     opacity: 0.66;
+  }
+  28% {
+    opacity: 0.4;
+    transform: translate(18vw, -28vh) scale(0.9) rotate(16deg);
+  }
+  42% {
+    opacity: 0;
+    transform: translate(54vw, -102vh) scale(1.18) rotate(28deg);
+  }
+  50% {
+    opacity: 0;
+    transform: translate(-20vw, 18vh) scale(0.32) rotate(-12deg);
+  }
+  62% {
+    opacity: 0.42;
+  }
+  82% {
+    opacity: 0.3;
+    transform: translate(-50vw, 54vh) scale(0.98) rotate(-22deg);
   }
   100% {
     opacity: 0;
-    transform: translate(12vw, -30vh) scale(1.02) rotate(26deg);
-    filter: blur(0.8px);
+    transform: translate(-96vw, 114vh) scale(1.24) rotate(-34deg);
   }
 }
 
 @keyframes batBurstNine {
   0% {
     opacity: 0;
-    transform: translate(0, 0) scale(0.28) rotate(-6deg);
-    filter: blur(8px);
+    transform: translate(-2vw, 1vh) scale(0.28) rotate(-6deg);
   }
-  22% {
+  10% {
     opacity: 0.54;
+  }
+  30% {
+    opacity: 0.36;
+    transform: translate(-28vw, -12vh) scale(1) rotate(-8deg);
+  }
+  44% {
+    opacity: 0;
+    transform: translate(-94vw, -34vh) scale(1.42) rotate(-18deg);
+  }
+  52% {
+    opacity: 0;
+    transform: translate(22vw, 12vh) scale(0.4) rotate(12deg);
+  }
+  64% {
+    opacity: 0.38;
+  }
+  84% {
+    opacity: 0.26;
+    transform: translate(66vw, 26vh) scale(1.12) rotate(22deg);
   }
   100% {
     opacity: 0;
-    transform: translate(-34vw, -8vh) scale(1.34) rotate(-12deg);
-    filter: blur(2px);
+    transform: translate(120vw, 48vh) scale(1.48) rotate(32deg);
   }
 }
 
 @keyframes batBurstTen {
   0% {
     opacity: 0;
-    transform: translate(0, 0) scale(0.22) rotate(6deg);
-    filter: blur(5px);
+    transform: translate(2vw, 0) scale(0.22) rotate(6deg);
   }
-  18% {
+  10% {
     opacity: 0.64;
+  }
+  28% {
+    opacity: 0.38;
+    transform: translate(26vw, 18vh) scale(0.92) rotate(12deg);
+  }
+  42% {
+    opacity: 0;
+    transform: translate(94vw, 54vh) scale(1.28) rotate(24deg);
+  }
+  50% {
+    opacity: 0;
+    transform: translate(-24vw, -16vh) scale(0.34) rotate(-14deg);
+  }
+  62% {
+    opacity: 0.4;
+  }
+  82% {
+    opacity: 0.28;
+    transform: translate(-70vw, -34vh) scale(1.02) rotate(-24deg);
   }
   100% {
     opacity: 0;
-    transform: translate(34vw, 10vh) scale(1.14) rotate(18deg);
-    filter: blur(1px);
+    transform: translate(-124vw, -58vh) scale(1.34) rotate(-34deg);
   }
 }
 
 @keyframes batBurstEleven {
   0% {
     opacity: 0;
-    transform: translate(0, 0) scale(0.24) rotate(-16deg);
-    filter: blur(5px);
+    transform: translate(-1vw, 1vh) scale(0.24) rotate(-16deg);
   }
-  20% {
+  10% {
     opacity: 0.66;
+  }
+  28% {
+    opacity: 0.4;
+    transform: translate(-18vw, 24vh) scale(0.94) rotate(-20deg);
+  }
+  42% {
+    opacity: 0;
+    transform: translate(-48vw, 108vh) scale(1.22) rotate(-34deg);
+  }
+  50% {
+    opacity: 0;
+    transform: translate(16vw, -18vh) scale(0.32) rotate(18deg);
+  }
+  62% {
+    opacity: 0.42;
+  }
+  82% {
+    opacity: 0.3;
+    transform: translate(44vw, -54vh) scale(0.98) rotate(30deg);
   }
   100% {
     opacity: 0;
-    transform: translate(-8vw, 34vh) scale(1.08) rotate(-30deg);
-    filter: blur(1px);
+    transform: translate(88vw, -118vh) scale(1.26) rotate(42deg);
   }
 }
 
 @keyframes batBurstTwelve {
   0% {
     opacity: 0;
-    transform: translate(0, 0) scale(0.28) rotate(16deg);
-    filter: blur(8px);
+    transform: translate(1vw, 1vh) scale(0.28) rotate(16deg);
   }
-  22% {
+  10% {
     opacity: 0.5;
+  }
+  30% {
+    opacity: 0.34;
+    transform: translate(24vw, 24vh) scale(1.02) rotate(20deg);
+  }
+  44% {
+    opacity: 0;
+    transform: translate(54vw, 112vh) scale(1.46) rotate(40deg);
+  }
+  52% {
+    opacity: 0;
+    transform: translate(-18vw, -20vh) scale(0.38) rotate(-18deg);
+  }
+  64% {
+    opacity: 0.36;
+  }
+  84% {
+    opacity: 0.24;
+    transform: translate(-46vw, -58vh) scale(1.14) rotate(-28deg);
   }
   100% {
     opacity: 0;
-    transform: translate(10vw, 36vh) scale(1.38) rotate(34deg);
-    filter: blur(2px);
+    transform: translate(-92vw, -122vh) scale(1.54) rotate(-40deg);
+  }
+}
+
+@keyframes bossFragmentLeft {
+  0% {
+    opacity: 0;
+    transform: translateY(-118vh) scale(1.3);
+  }
+  16% {
+    opacity: 0.12;
+  }
+  42% {
+    opacity: 0.34;
+    transform: translateY(-16vh) scale(1.24);
+  }
+  74% {
+    opacity: 0.34;
+    transform: translateY(-12vh) scale(1.22);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(28vh) scale(1.14);
+  }
+}
+
+@keyframes bossFragmentRight {
+  0% {
+    opacity: 0;
+    transform: translateY(122vh) scale(1.42);
+  }
+  16% {
+    opacity: 0.12;
+  }
+  42% {
+    opacity: 0.36;
+    transform: translateY(18vh) scale(1.36);
+  }
+  76% {
+    opacity: 0.36;
+    transform: translateY(14vh) scale(1.34);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-32vh) scale(1.18);
+  }
+}
+
+@keyframes bossFragmentRightShadow {
+  0% {
+    opacity: 0;
+    transform: translateY(126vh) scale(2.1);
+  }
+  16% {
+    opacity: 0.04;
+  }
+  42% {
+    opacity: 0.16;
+    transform: translateY(22vh) scale(1.98);
+  }
+  76% {
+    opacity: 0.16;
+    transform: translateY(18vh) scale(1.94);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-28vh) scale(1.72);
+  }
+}
+
+@keyframes transitionWordReveal {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.76);
+    filter: blur(6px);
+  }
+  16% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.02);
+    filter: blur(0.6px);
+  }
+  68% {
+    opacity: 0.94;
+    transform: translate(-50%, -50%) scale(1);
+    filter: blur(0.2px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.06);
+    filter: blur(3px);
+  }
+}
+
+@keyframes blackoutHold {
+  0% {
+    opacity: 0;
+  }
+  2% {
+    opacity: 0.78;
+  }
+  92% {
+    opacity: 0.78;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes afterglowHold {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  18% {
+    opacity: 0.68;
+    transform: scale(1);
+  }
+  72% {
+    opacity: 0.42;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes heartbeatPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  12% {
+    opacity: 0.22;
+    transform: scale(1);
+  }
+  20% {
+    opacity: 0.08;
+    transform: scale(0.985);
+  }
+  34% {
+    opacity: 0.36;
+    transform: scale(1.03);
+  }
+  44% {
+    opacity: 0.12;
+    transform: scale(1);
+  }
+  66% {
+    opacity: 0.22;
+    transform: scale(1.018);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes bossBackpulse {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.18);
+  }
+  12% {
+    opacity: 0.44;
+    transform: translate(-50%, -50%) scale(1.42);
+  }
+  32% {
+    opacity: 0.34;
+    transform: translate(-50%, -50%) scale(1.72);
+  }
+  58% {
+    opacity: 0.18;
+    transform: translate(-50%, -50%) scale(2.06);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.34);
+  }
+}
+
+@keyframes bossBackpulseEchoOne {
+  0% {
+    opacity: 0;
+    transform: translate(-8%, -14%) scale(1.1);
+  }
+  14% {
+    opacity: 0.28;
+    transform: translate(-10%, -18%) scale(1.34);
+  }
+  38% {
+    opacity: 0.2;
+    transform: translate(-14%, -24%) scale(1.64);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-18%, -30%) scale(2.02);
+  }
+}
+
+@keyframes bossBackpulseEchoTwo {
+  0% {
+    opacity: 0;
+    transform: translate(9%, -10%) scale(1.06);
+  }
+  18% {
+    opacity: 0.22;
+    transform: translate(12%, -14%) scale(1.28);
+  }
+  42% {
+    opacity: 0.16;
+    transform: translate(16%, -20%) scale(1.54);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(20%, -26%) scale(1.92);
   }
 }
 

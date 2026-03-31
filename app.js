@@ -5,13 +5,19 @@ const state = {
   playerCount: 0,
   initialBossHp: 0,
   bossHp: 0,
+  bossTurnDamage: 0,
   turnCount: 0,
   roundCount: 1,
   currentPlayerIndex: 0,
   effects: [],
+  playerEffects: [],
+  bossStatuses: [],
   fightActionCount: 0,
+  roundUsedSkillIds: [],
+  forceNextSkillUse: false,
   unlockedSkills: [],
   currentSkill: null,
+  currentSkillResult: null,
   defeatCgDismissed: false,
   skillAnnouncementTitleKey: "boss_skills",
   skillAnnouncementSkills: [],
@@ -20,28 +26,108 @@ const state = {
 
 const skillLibrary = [
   {
+    id: "shadow_rend",
+    tier: 1,
     name: { en: "Shadow Rend", zh: "暗影撕咬" },
     description: { en: "The boss dives in and tears at the battlefield.", zh: "Boss 俯冲撕扯，像要把战场撕开。" },
+    effect: {
+      en: "50% chance to deal 2 damage to the current player, 40% chance to deal 4 damage, and 10% chance to deal 7 damage.",
+      zh: "对当前回合玩家 50% 几率造成 2 点伤害，40% 几率造成 4 点伤害，10% 几率造成 7 点伤害。",
+    },
   },
   {
+    id: "dread_gaze",
+    tier: 2,
     name: { en: "Dread Gaze", zh: "恐惧凝视" },
     description: { en: "The boss locks onto a player and raises the pressure instantly.", zh: "Boss 锁定一名玩家，压迫感陡然上升。" },
+    effect: {
+      en: "Flip the current player over. They skip their next turn.",
+      zh: "当前回合玩家翻面，跳过下个回合。",
+    },
   },
   {
+    id: "corrupt_breath",
+    tier: 1,
     name: { en: "Corrupt Breath", zh: "腐化吐息" },
-    description: { en: "The boss exhales dark mist, perfect for adding a status effect.", zh: "Boss 喷出黑雾，适合主持人追加异常状态。" },
+    description: { en: "The boss exhales dark mist and leaves poison behind.", zh: "Boss 喷出黑雾，造成持续中毒。" },
+    effect: {
+      en: "The current player has a 50% chance to lose 1 HP on each of their turns for 1 round.",
+      zh: "当前回合玩家在接下来一轮中，每回合有 50% 几率失去 1 点体力。",
+    },
   },
   {
+    id: "bonebreaker_slam",
+    tier: 1,
     name: { en: "Bonebreaker Slam", zh: "碎骨重击" },
     description: { en: "The boss smashes the ground like another strike is coming next.", zh: "Boss 重砸地面，下一秒像要继续追击。" },
+    effect: {
+      en: "Deal 3 damage to the current player. If their HP is 5 or lower, deal 5 instead. This app defaults to 3.",
+      zh: "对当前回合玩家造成 3 点伤害；若当前玩家血量不大于 5，则改为 5 点。本程序默认按 3 点处理。",
+    },
   },
   {
+    id: "crimson_echo",
+    tier: 2,
     name: { en: "Crimson Echo", zh: "血色回响" },
-    description: { en: "A low pulse from the boss fills the air with danger.", zh: "Boss 发出低鸣，空气里都是危险预兆。" },
+    description: { en: "A low pulse from the boss fills the air with danger.", zh: "Boss 发出低鸣，空气里都是危险。" },
+    effect: {
+      en: "Deal 1 damage to all players.",
+      zh: "对所有玩家造成 1 点伤害。",
+    },
   },
   {
-    name: { en: "Calamity Pulse", zh: "灾厄脉冲" },
-    description: { en: "The boss releases a shockwave and announces a new offensive.", zh: "Boss 释放冲击波，像在宣告新一轮攻势。" },
+    id: "calamity_trap",
+    tier: 2,
+    name: { en: "Calamity Trap", zh: "灾厄陷阱" },
+    description: { en: "The boss refuses to attack directly and instead taunts the opponent.", zh: "Boss 并没有主动攻击，反而在挑衅对手。" },
+    effect: {
+      en: "The boss ignores all instant effects this turn and deals 1 damage. If the block succeeds, it deals 1 extra damage and heals 1 HP.",
+      zh: "Boss 免疫此回合受到的单次效果并对玩家造成 1 点伤害；若免疫成功，对玩家额外造成 1 点伤害并回复 1 点体力。",
+    },
+  },
+  {
+    id: "unspeakable",
+    tier: 3,
+    name: { en: "Unspeakable", zh: "不可名状" },
+    description: { en: "The boss releases eldritch energy and sends everyone into panic.", zh: "Boss 释放诡异能量，所有玩家陷入恐慌。" },
+    effect: {
+      en: "All damage the boss takes is reduced by 1, including instant and ongoing damage, for 1 round.",
+      zh: "Boss 每次受到的伤害 -1，包括单次和持续效果，持续一轮。",
+    },
+  },
+  {
+    id: "beyond_time",
+    tier: 3,
+    name: { en: "Beyond Time", zh: "无往无前" },
+    description: {
+      en: "The boss enters a trance. It has no past and no future.",
+      zh: "Boss 进入冥想状态，他没有过去，没有未来。",
+    },
+    effect: {
+      en: "Remove all current boss statuses.",
+      zh: "Boss 清除自身所有状态。",
+    },
+  },
+  {
+    id: "coiled_wait",
+    tier: 1,
+    name: { en: "Dormant Charge", zh: "蛰伏待机" },
+    description: { en: "The boss crouches in silence, ready to spring at any moment.", zh: "Boss 进入蓄力状态，随时都要扑越上来。" },
+    effect: {
+      en: "The boss's next damage gains +X, where X is the current number of Dormant Charge stacks.",
+      zh: "Boss 造成的下一次伤害 +X，其中 X 为当前蛰伏待机的次数。",
+    },
+  },
+  {
+    id: "endless_malice",
+    tier: 4,
+    name: { en: "Endless Malice", zh: "无尽恶意" },
+    description: { en: "The boss releases its ultimate power.", zh: "Boss 释放出终极力量。" },
+    effect: {
+      en: "All damage the boss deals from now on gains +1.",
+      zh: "Boss 接下来造成的所有伤害数值额外 +1。",
+    },
+    isUltimate: true,
   },
 ];
 
@@ -79,6 +165,19 @@ const musicPlayer = new Audio();
 musicPlayer.preload = "auto";
 musicPlayer.volume = 0.62;
 
+const normalAttackSkill = {
+  id: "normal_attack",
+  name: { en: "Normal Attack", zh: "普通攻击" },
+  description: {
+    en: "The boss lashes out with a basic strike.",
+    zh: "Boss 发起一次普通攻击。",
+  },
+  effect: {
+    en: "Deal 1 damage to the current player.",
+    zh: "对当前回合玩家造成 1 点伤害。",
+  },
+};
+
 const translations = {
   en: {
     app_title: "Boss Fight Assistant",
@@ -114,6 +213,7 @@ const translations = {
     ongoing_effects: "Ongoing Effects",
     quick_adjust: "Quick Adjust",
     boss_hp: "Boss HP",
+    boss_turn_damage: "Boss Damage",
     boss_minus_1: "Boss -1 HP",
     boss_plus_1: "Boss +1 HP",
     boss_skills: "Boss Skills",
@@ -121,10 +221,17 @@ const translations = {
     boss_new_skill: "Boss Learned a New Skill",
     no_skills: "No skills yet.",
     no_effects: "No ongoing effects.",
+    no_player_effects: "No player effects.",
     boss_defeated: "BOSS DEFEATED",
     language: "Language",
     bgm_on: "BGM On",
     bgm_off: "BGM Off",
+    player_effects: "Player Effects",
+    player_effect_turns_label: "{turns} round(s) left",
+    boss_status_turns_label: "{turns} turn(s) left",
+    boss_label: "Boss",
+    player_status_skip_short: "Skip next turn",
+    player_status_poison_short: "50% chance to lose 1 HP each turn",
     player_n: "Player {n}",
     init_complete: "Initialized: {playerCount} players, Boss starting HP {initialHp}.",
     gather_turn_complete: "{player} completed a resource turn. Boss HP +1.",
@@ -147,11 +254,39 @@ const translations = {
     skill_summary: "Boss skill: {skill}.",
     effect_label_damage: "{amount} damage each future turn, {turns} turns left",
     effect_label_heal: "{amount} heal each future turn, {turns} turns left",
+    effect_label_generic: "{label}. {turns}",
     invalid_player_count: "Please enter a valid player count.",
     invalid_initial_hp: "Please enter a valid starting Boss HP.",
     invalid_initial_skill_count: "Please enter a valid starting skill count.",
     manual_boss_minus: "Manual adjust: Boss HP -1.",
     manual_boss_plus: "Manual adjust: Boss HP +1.",
+    boss_turn_summary: "Boss turn: {summary}",
+    normal_attack_summary: "{player} takes {amount} damage from a normal attack.",
+    boss_damage_player: "{player} takes {amount} damage.",
+    boss_damage_all_players: "All players take {amount} damage.",
+    boss_damage_zero: "{player} takes 0 damage.",
+    boss_skip_next_turn: "{player} will skip their next turn.",
+    boss_poison_round: "{player} is poisoned: each of their turns has a 50% chance to lose 1 HP for 1 round.",
+    boss_instant_block: "The boss ignores instant effects on the next player action.",
+    boss_clear_status: "The boss clears all current statuses.",
+    boss_next_double: "The boss's next damage gains +X from Dormant Charge.",
+    boss_damage_plus: "The boss's future damage gains +1.",
+    boss_poison_trigger_hit: "{player}'s poison triggers for {amount} damage. {remaining}",
+    boss_poison_trigger_miss: "{player}'s poison triggers for 0 damage. {remaining}",
+    player_skip_trigger: "{player} skips this turn. {remaining}",
+    boss_reduction_trigger: "Boss damage reduction remains active. {remaining}",
+    boss_instant_blocked_action: "Boss instant immunity blocks the player's instant effect.",
+    boss_instant_block_bonus: "The trap is triggered: {player} takes 1 extra damage and the boss heals 1 HP.",
+    turn_skipped_banner: "Turn Skipped",
+    turn_skipped_desc: "This player loses their action because of a boss effect.",
+    boss_status_reduction: "Reduce all incoming damage by 1",
+    boss_status_next_double: "Next damage +X",
+    boss_status_instant_immunity: "Ignore instant effects this turn",
+    boss_status_damage_plus: "Future damage +1",
+    boss_status_turn_used: "Used this round",
+    transition_word_one: "Ready",
+    transition_word_two: "to",
+    transition_word_three: "die?",
   },
   zh: {
     app_title: "Boss Fight Assistant",
@@ -187,6 +322,7 @@ const translations = {
     ongoing_effects: "持续效果",
     quick_adjust: "快速调整",
     boss_hp: "Boss HP",
+    boss_turn_damage: "Boss 伤害",
     boss_minus_1: "Boss -1 HP",
     boss_plus_1: "Boss +1 HP",
     boss_skills: "Boss 技能",
@@ -194,10 +330,17 @@ const translations = {
     boss_new_skill: "Boss 获得新技能",
     no_skills: "目前没有技能。",
     no_effects: "目前没有持续效果。",
+    no_player_effects: "目前没有玩家效果。",
     boss_defeated: "BOSS DEFEATED",
     language: "语言",
     bgm_on: "BGM 开",
     bgm_off: "BGM 关",
+    player_effects: "玩家效果",
+    player_effect_turns_label: "剩余 {turns} 轮",
+    boss_status_turns_label: "剩余 {turns} 回合",
+    boss_label: "Boss",
+    player_status_skip_short: "跳过下个回合",
+    player_status_poison_short: "每回合 50% 几率失去 1 点体力",
     player_n: "玩家 {n}",
     init_complete: "初始化完成：{playerCount} 名玩家，Boss 初始 HP 为 {initialHp}。",
     gather_turn_complete: "{player} 完成资源回合，Boss HP +1。",
@@ -220,11 +363,39 @@ const translations = {
     skill_summary: "Boss 技能：{skill}。",
     effect_label_damage: "后续每回合 {amount} 伤害，剩余 {turns} 回合",
     effect_label_heal: "后续每回合 {amount} 回复，剩余 {turns} 回合",
+    effect_label_generic: "{label}。{turns}",
     invalid_player_count: "请输入有效的玩家数量。",
     invalid_initial_hp: "请输入有效的 Boss 初始血量。",
     invalid_initial_skill_count: "请输入有效的初始技能数。",
     manual_boss_minus: "手动调整：Boss HP -1。",
     manual_boss_plus: "手动调整：Boss HP +1。",
+    boss_turn_summary: "Boss 回合：{summary}",
+    normal_attack_summary: "普通攻击命中，{player} 受到 {amount} 点伤害。",
+    boss_damage_player: "{player} 受到 {amount} 点伤害。",
+    boss_damage_all_players: "所有玩家受到 {amount} 点伤害。",
+    boss_damage_zero: "{player} 受到 0 点伤害。",
+    boss_skip_next_turn: "{player} 将跳过下一个回合。",
+    boss_poison_round: "{player} 陷入中毒：在接下来一轮中，该玩家每回合有 50% 几率失去 1 点体力。",
+    boss_instant_block: "Boss 会在下一名玩家行动时免疫单次效果。",
+    boss_clear_status: "Boss 清除了自身所有状态。",
+    boss_next_double: "Boss 的下一次伤害获得来自蛰伏待机的 +X。",
+    boss_damage_plus: "Boss 后续造成的伤害额外 +1。",
+    boss_poison_trigger_hit: "{player} 的中毒触发，造成 {amount} 点伤害。{remaining}",
+    boss_poison_trigger_miss: "{player} 的中毒触发，但造成 0 点伤害。{remaining}",
+    player_skip_trigger: "{player} 跳过本回合。{remaining}",
+    boss_reduction_trigger: "Boss 的减伤仍在生效。{remaining}",
+    boss_instant_blocked_action: "Boss 的单次免疫挡下了玩家的单次效果。",
+    boss_instant_block_bonus: "陷阱触发：{player} 额外受到 1 点伤害，Boss 回复 1 点体力。",
+    turn_skipped_banner: "回合跳过",
+    turn_skipped_desc: "该玩家受到 Boss 效果影响，本回合无法行动。",
+    boss_status_reduction: "所有受到的伤害 -1",
+    boss_status_next_double: "下一次伤害 +X",
+    boss_status_instant_immunity: "本回合免疫单次效果",
+    boss_status_damage_plus: "后续伤害 +1",
+    boss_status_turn_used: "本轮已使用",
+    transition_word_one: "为何",
+    transition_word_two: "急于",
+    transition_word_three: "求死？",
   },
 };
 
@@ -274,8 +445,12 @@ const els = {
   skillAnnouncementTitle: document.getElementById("skillAnnouncementTitle"),
   skillAnnouncementList: document.getElementById("skillAnnouncementList"),
   transitionOverlay: document.getElementById("transitionOverlay"),
+  transitionWordOne: document.getElementById("transitionWordOne"),
+  transitionWordTwo: document.getElementById("transitionWordTwo"),
+  transitionWordThree: document.getElementById("transitionWordThree"),
   currentSkillName: document.getElementById("currentSkillName"),
   currentSkillDesc: document.getElementById("currentSkillDesc"),
+  skillBanner: document.getElementById("skillBanner"),
   defeatCg: document.getElementById("defeatCg"),
   defeatCloseBtn: document.getElementById("defeatCloseBtn"),
   setupTitle: document.getElementById("setupTitle"),
@@ -289,6 +464,8 @@ const els = {
   turnCountLabel: document.getElementById("turnCountLabel"),
   bossHpLabelTop: document.getElementById("bossHpLabelTop"),
   fightBossHpLabel: document.getElementById("fightBossHpLabel"),
+  bossTurnDamageLabel: document.getElementById("bossTurnDamageLabel"),
+  bossTurnDamageDisplay: document.getElementById("bossTurnDamageDisplay"),
   actingPlayerLabel: document.getElementById("actingPlayerLabel"),
   instantEffectLabel: document.getElementById("instantEffectLabel"),
   instantOptionDamage: document.getElementById("instantOptionDamage"),
@@ -302,6 +479,8 @@ const els = {
   currentPlayerChipLabel: document.getElementById("currentPlayerChipLabel"),
   effectCountChipLabel: document.getElementById("effectCountChipLabel"),
   quickAdjustTitle: document.getElementById("quickAdjustTitle"),
+  playerEffectsTitle: document.getElementById("playerEffectsTitle"),
+  playerEffectsList: document.getElementById("playerEffectsList"),
   effectsPanelTitle: document.getElementById("effectsPanelTitle"),
   logTitle: document.getElementById("logTitle"),
   skillModalTitle: document.getElementById("skillModalTitle"),
@@ -323,6 +502,10 @@ function getSkillName(skill) {
 
 function getSkillDescription(skill) {
   return skill?.description?.[state.language] ?? skill?.description?.en ?? "";
+}
+
+function getSkillEffectText(skill) {
+  return skill?.effect?.[state.language] ?? skill?.effect?.en ?? "";
 }
 
 function getPlaylistTracks() {
@@ -447,6 +630,7 @@ function applyStaticTranslations() {
   els.gatherCurrentPlayerText.textContent = t("current_acting_player");
   els.bossHpLabelTop.textContent = t("boss_hp");
   els.fightBossHpLabel.textContent = t("boss_hp");
+  els.bossTurnDamageLabel.textContent = t("boss_turn_damage");
   els.roundCountLabel.textContent = t("current_round");
   els.turnCountLabel.textContent = t("total_turns");
   els.endTurnBtn.textContent = t("end_current_turn");
@@ -470,6 +654,7 @@ function applyStaticTranslations() {
   els.currentPlayerChipLabel.textContent = t("current_player");
   els.effectCountChipLabel.textContent = t("ongoing_effects");
   els.quickAdjustTitle.textContent = t("quick_adjust");
+  els.playerEffectsTitle.textContent = t("player_effects");
   els.bossDamageBtn.textContent = t("boss_minus_1");
   els.bossHealBtn.textContent = t("boss_plus_1");
   els.effectsPanelTitle.textContent = t("ongoing_effects");
@@ -481,6 +666,9 @@ function applyStaticTranslations() {
   els.skillAnnouncementCloseBtn.textContent = t("close");
   els.defeatCloseBtn.textContent = t("close");
   els.defeatTitle.textContent = t("boss_defeated");
+  els.transitionWordOne.textContent = t("transition_word_one");
+  els.transitionWordTwo.textContent = t("transition_word_two");
+  els.transitionWordThree.textContent = t("transition_word_three");
 }
 
 function switchScreen(screenId) {
@@ -511,16 +699,20 @@ function updateUI() {
 
   els.bossHp.textContent = String(state.bossHp);
   els.fightBossHp.textContent = String(state.bossHp);
+  els.bossTurnDamageDisplay.textContent = String(state.bossTurnDamage);
   els.roundCount.textContent = String(state.roundCount);
   els.turnCount.textContent = String(state.turnCount);
   els.currentPlayer.textContent = getCurrentPlayerLabel();
   els.gatherPlayerLabel.textContent = getCurrentPlayerLabel();
-  els.effectCount.textContent = String(state.effects.length);
+  els.effectCount.textContent = String(state.effects.length + state.playerEffects.length + state.bossStatuses.length);
   els.phaseLabel.textContent = inFight ? t("boss_fight") : inGather ? t("resource_phase") : t("setup_title");
   els.gatherSkillToggleBtn.textContent = t("skill_library");
   els.skillToggleBtn.textContent = t("skill_library");
   els.currentSkillName.textContent = state.currentSkill ? getSkillName(state.currentSkill) : t("awaiting_skill");
-  els.currentSkillDesc.textContent = state.currentSkill ? getSkillDescription(state.currentSkill) : "";
+  els.currentSkillDesc.textContent = state.currentSkill
+    ? state.currentSkillResult?.summary ?? getSkillDescription(state.currentSkill)
+    : "";
+  els.skillBanner.classList.toggle("ultimate-flare", Boolean(state.currentSkill?.isUltimate));
 
   els.endTurnBtn.disabled = !inGather;
   els.startFightBtn.disabled = !inGather || !state.initialized;
@@ -529,6 +721,7 @@ function updateUI() {
   els.bossHealBtn.disabled = !inFight;
 
   renderEffects();
+  renderPlayerEffects();
   renderSkills();
   updateDefeatCg();
   updateEffectInputHints();
@@ -549,22 +742,43 @@ function playScreenTransition(phaseClass, nextScreenId, duration, switchRatio) {
 }
 
 function pickRandomSkills(count) {
-  const pool = [...skillLibrary];
   const chosen = [];
-  const limit = Math.max(0, Math.min(count, pool.length));
+  const limit = Math.max(0, Math.min(count, skillLibrary.length));
 
   while (chosen.length < limit) {
-    const index = Math.floor(Math.random() * pool.length);
-    chosen.push(pool.splice(index, 1)[0]);
+    const learnedIds = new Set(chosen.map((skill) => skill.id));
+    const remaining = getLearnableSkills(learnedIds);
+    if (remaining.length === 0) {
+      break;
+    }
+    const index = Math.floor(Math.random() * remaining.length);
+    chosen.push(remaining[index]);
   }
 
   return chosen;
 }
 
+function getLearnableSkills(learnedIds = new Set(state.unlockedSkills.map((skill) => skill.id))) {
+  const tiers = [1, 2, 3, 4];
+
+  for (const tier of tiers) {
+    const tierSkills = skillLibrary.filter((skill) => skill.tier === tier);
+    const unlockedTier = tier === 1 || skillLibrary.filter((skill) => skill.tier === tier - 1).every((skill) => learnedIds.has(skill.id));
+    if (!unlockedTier) {
+      return [];
+    }
+
+    const remaining = tierSkills.filter((skill) => !learnedIds.has(skill.id));
+    if (remaining.length > 0) {
+      return remaining;
+    }
+  }
+
+  return [];
+}
+
 function learnRandomSkill() {
-  const remaining = skillLibrary.filter(
-    (skill) => !state.unlockedSkills.some((ownedSkill) => ownedSkill.name === skill.name),
-  );
+  const remaining = getLearnableSkills();
 
   if (remaining.length === 0) {
     return null;
@@ -572,21 +786,31 @@ function learnRandomSkill() {
 
   const learned = remaining[Math.floor(Math.random() * remaining.length)];
   state.unlockedSkills.push(learned);
-  state.currentSkill = learned;
+  if (learned.isUltimate) {
+    state.forceNextSkillUse = true;
+    triggerUltimateFlare();
+  }
   openSkillAnnouncement("boss_new_skill", [learned]);
   return learned;
 }
 
 function useRandomUnlockedSkill() {
-  if (state.unlockedSkills.length === 0) {
-    const learned = learnRandomSkill();
-    if (!learned) {
-      state.currentSkill = null;
-      return null;
-    }
+  const availableSkills = state.unlockedSkills.filter((skill) => !state.roundUsedSkillIds.includes(skill.id));
+
+  if (availableSkills.length === 0) {
+    state.currentSkill = normalAttackSkill;
+    return normalAttackSkill;
   }
 
-  state.currentSkill = state.unlockedSkills[Math.floor(Math.random() * state.unlockedSkills.length)];
+  const shouldUseSkill = state.forceNextSkillUse || Math.random() >= 0.5;
+  if (!shouldUseSkill) {
+    state.currentSkill = normalAttackSkill;
+    return normalAttackSkill;
+  }
+
+  state.forceNextSkillUse = false;
+  state.currentSkill = availableSkills[Math.floor(Math.random() * availableSkills.length)];
+  state.roundUsedSkillIds.push(state.currentSkill.id);
   return state.currentSkill;
 }
 
@@ -596,13 +820,19 @@ function initializeGame(playerCount, initialHp, initialSkillCount) {
   state.playerCount = playerCount;
   state.initialBossHp = initialHp;
   state.bossHp = initialHp;
+  state.bossTurnDamage = 0;
   state.turnCount = 0;
   state.roundCount = 1;
   state.currentPlayerIndex = 0;
   state.effects = [];
+  state.playerEffects = [];
+  state.bossStatuses = [];
   state.fightActionCount = 0;
+  state.roundUsedSkillIds = [];
   state.unlockedSkills = pickRandomSkills(initialSkillCount);
-  state.currentSkill = state.unlockedSkills[0] || null;
+  state.forceNextSkillUse = state.unlockedSkills.some((skill) => skill.id === "endless_malice");
+  state.currentSkill = null;
+  state.currentSkillResult = null;
   state.defeatCgDismissed = false;
   state.logEntries = [];
 
@@ -659,6 +889,13 @@ function startFight() {
   setMusicPlaylist("fight", { restart: true });
   state.phase = "fight";
   state.currentPlayerIndex = 0;
+  state.bossTurnDamage = 0;
+  state.bossStatuses = [];
+  state.playerEffects = [];
+  state.roundUsedSkillIds = [];
+  state.forceNextSkillUse = state.unlockedSkills.some((skill) => skill.id === "endless_malice");
+  state.currentSkill = null;
+  state.currentSkillResult = null;
   state.defeatCgDismissed = false;
   els.actingPlayer.value = t("player_n", { n: 1 });
   addLog({
@@ -667,10 +904,10 @@ function startFight() {
     params: { bossHp: state.bossHp },
   });
   updateUI();
-  playScreenTransition("phase-fight", "fightScreen", 4000, 0.76);
+  playScreenTransition("phase-fight", "fightScreen", 15200, 0.9);
   window.setTimeout(() => {
     openSkillAnnouncement("boss_current_skills", state.unlockedSkills);
-  }, 4000);
+  }, 15200);
 }
 
 function updateEffectInputHints() {
@@ -694,7 +931,7 @@ function autoResolveEffects() {
   }
 
   const resolvingEffects = [...state.effects];
-  const netDamage = resolvingEffects.reduce((sum, effect) => sum + effect.damage, 0);
+  let netDamage = 0;
   state.effects = resolvingEffects
     .map((effect) => ({
       ...effect,
@@ -703,11 +940,14 @@ function autoResolveEffects() {
     .filter((effect) => effect.remainingTurns > 0);
 
   resolvingEffects.forEach((effect) => {
+    const actualAmount =
+      effect.damage > 0 ? applyIncomingBossDamageReduction(effect.damage) : Math.abs(effect.damage);
+    netDamage += effect.damage > 0 ? actualAmount : -actualAmount;
     addLog(
       {
         type: "effect-resolve",
         source: effect.source,
-        amount: Math.abs(effect.damage),
+        amount: actualAmount,
         effectType: effect.damage > 0 ? "damage" : "heal",
         remainingTurns: Math.max(0, effect.remainingTurns - 1),
       },
@@ -738,6 +978,323 @@ function autoResolveEffects() {
   }
 }
 
+function getCurrentActingPlayerName() {
+  return els.actingPlayer.value.trim() || getCurrentPlayerLabel();
+}
+
+function addPlayerStatus(status) {
+  state.playerEffects.push({
+    id: createId(),
+    ...status,
+  });
+}
+
+function addBossStatus(status) {
+  state.bossStatuses.push({
+    id: createId(),
+    ...status,
+  });
+}
+
+function countBossStatus(type) {
+  return state.bossStatuses.filter((status) => status.type === type).length;
+}
+
+function applyIncomingBossDamageReduction(amount) {
+  if (amount <= 0) {
+    return 0;
+  }
+
+  const reduction = countBossStatus("damage_reduction_round");
+  return Math.max(0, amount - reduction);
+}
+
+function clearBossStatuses() {
+  state.effects = [];
+  state.bossStatuses = [];
+}
+
+function getRemainingText(remaining) {
+  return remaining > 0 ? t("remaining_turns", { count: remaining }) : t("effect_ended");
+}
+
+function calculateBossDamage(baseDamage) {
+  if (baseDamage <= 0) {
+    return 0;
+  }
+
+  const pendingCharge = countBossStatus("next_charge");
+  const bonus = countBossStatus("damage_plus");
+  const total = baseDamage + pendingCharge + bonus;
+
+  if (pendingCharge > 0) {
+    state.bossStatuses = state.bossStatuses.filter((status) => status.type !== "next_charge");
+  }
+
+  return total;
+}
+
+function resolveBossStatusesAtTurnStart() {
+  if (state.bossStatuses.some((status) => status.type === "damage_reduction_round")) {
+    const status = state.bossStatuses.find((item) => item.type === "damage_reduction_round");
+    addLog({
+      type: "i18n",
+      key: "boss_reduction_trigger",
+      params: {
+        remaining: getRemainingText(Math.max(0, (status?.remainingTurns ?? 1) - 1)),
+      },
+    });
+  }
+}
+
+function resolveCurrentPlayerStatuses() {
+  const currentIndex = state.currentPlayerIndex;
+  const currentPlayer = getCurrentActingPlayerName();
+  let damage = 0;
+  let skipTurn = false;
+  const nextEffects = [];
+
+  state.playerEffects.forEach((effect) => {
+    if (effect.targetIndex !== currentIndex) {
+      nextEffects.push(effect);
+      return;
+    }
+
+    const remainingRounds = effect.remainingRounds - 1;
+
+    if (effect.type === "poison_round") {
+      const didHit = Math.random() < effect.chance;
+      const dealt = didHit ? calculateBossDamage(effect.amount) : 0;
+      damage += dealt;
+      addLog({
+        type: "i18n",
+        key: didHit ? "boss_poison_trigger_hit" : "boss_poison_trigger_miss",
+        params: {
+          player: currentPlayer,
+          amount: dealt,
+          remaining: getRemainingText(remainingRounds),
+        },
+      });
+    }
+
+    if (effect.type === "skip_turn") {
+      skipTurn = true;
+      addLog({
+        type: "i18n",
+        key: "player_skip_trigger",
+        params: {
+          player: currentPlayer,
+          remaining: getRemainingText(remainingRounds),
+        },
+      });
+    }
+
+    if (remainingRounds > 0) {
+      nextEffects.push({
+        ...effect,
+        remainingRounds,
+      });
+    }
+  });
+
+  state.playerEffects = nextEffects;
+  return { damage, skipTurn };
+}
+
+function getBossStatusLabel(status) {
+  if (status.type === "damage_reduction_round") {
+    return t("boss_status_reduction");
+  }
+
+  if (status.type === "next_charge") {
+    return t("boss_status_next_double");
+  }
+
+  if (status.type === "instant_immunity") {
+    return t("boss_status_instant_immunity");
+  }
+
+  if (status.type === "damage_plus") {
+    return t("boss_status_damage_plus");
+  }
+
+  return "";
+}
+
+function getBossStatusText(status) {
+  if (typeof status.remainingTurns === "number") {
+    return t("effect_label_generic", {
+      label: getBossStatusLabel(status),
+      turns: t("boss_status_turns_label", { turns: status.remainingTurns }),
+    });
+  }
+
+  return getBossStatusLabel(status);
+}
+
+function getBossStatusKind(status) {
+  if (status.type === "damage_reduction_round" || status.type === "instant_immunity") {
+    return "heal";
+  }
+
+  if (status.type === "next_charge" || status.type === "damage_plus") {
+    return "damage";
+  }
+
+  return "";
+}
+
+function createSkillSummary(key, params) {
+  return t(key, params);
+}
+
+function resolveBossSkill(skill) {
+  const currentPlayer = getCurrentActingPlayerName();
+  const currentIndex = state.currentPlayerIndex;
+  const result = {
+    damageToCurrentPlayer: 0,
+    summary: "",
+  };
+
+  if (skill.isUltimate) {
+    triggerUltimateFlare();
+  }
+
+  switch (skill.id) {
+    case "shadow_rend": {
+      const roll = Math.random();
+      const baseDamage = roll < 0.5 ? 2 : roll < 0.9 ? 4 : 7;
+      const damage = calculateBossDamage(baseDamage);
+      result.damageToCurrentPlayer = damage;
+      result.summary = createSkillSummary("boss_damage_player", { player: currentPlayer, amount: damage });
+      break;
+    }
+    case "dread_gaze": {
+      addPlayerStatus({
+        type: "skip_turn",
+        targetIndex: currentIndex,
+        player: currentPlayer,
+        remainingRounds: 1,
+      });
+      result.summary = createSkillSummary("boss_skip_next_turn", { player: currentPlayer });
+      break;
+    }
+    case "corrupt_breath": {
+      addPlayerStatus({
+        type: "poison_round",
+        targetIndex: currentIndex,
+        player: currentPlayer,
+        remainingRounds: 1,
+        amount: 1,
+        chance: 0.5,
+      });
+      result.summary = createSkillSummary("boss_poison_round", { player: currentPlayer });
+      break;
+    }
+    case "bonebreaker_slam": {
+      const damage = calculateBossDamage(3);
+      result.damageToCurrentPlayer = damage;
+      result.summary = createSkillSummary("boss_damage_player", { player: currentPlayer, amount: damage });
+      break;
+    }
+    case "crimson_echo": {
+      const damage = calculateBossDamage(1);
+      result.damageToCurrentPlayer = damage;
+      result.summary = createSkillSummary("boss_damage_all_players", { amount: damage });
+      break;
+    }
+    case "calamity_trap": {
+      addBossStatus({
+        type: "instant_immunity",
+        remainingTurns: 1,
+        blockedExtraDamage: 1,
+        healOnBlock: 1,
+        justAdded: true,
+      });
+      const damage = calculateBossDamage(1);
+      result.damageToCurrentPlayer = damage;
+      result.summary = `${createSkillSummary("boss_instant_block", {})} ${createSkillSummary("boss_damage_player", {
+        player: currentPlayer,
+        amount: damage,
+      })}`.trim();
+      break;
+    }
+    case "unspeakable": {
+      addBossStatus({
+        type: "damage_reduction_round",
+        remainingTurns: state.playerCount,
+        justAdded: true,
+      });
+      result.summary = getSkillEffectText(skill);
+      break;
+    }
+    case "beyond_time": {
+      clearBossStatuses();
+      result.summary = createSkillSummary("boss_clear_status", {});
+      break;
+    }
+    case "dormant_charge": {
+      addBossStatus({
+        type: "next_charge",
+      });
+      result.summary = createSkillSummary("boss_next_double", {});
+      break;
+    }
+    case "endless_malice": {
+      addBossStatus({
+        type: "damage_plus",
+      });
+      result.summary = createSkillSummary("boss_damage_plus", {});
+      break;
+    }
+    default: {
+      result.summary = createSkillSummary("boss_damage_zero", { player: currentPlayer });
+      break;
+    }
+  }
+
+  state.bossTurnDamage += result.damageToCurrentPlayer;
+  addLog({
+    type: "i18n",
+    key: "boss_turn_summary",
+    params: { summary: `${getSkillName(skill)}. ${result.summary}`.trim() },
+  });
+  return result;
+}
+
+function expireEndOfTurnBossStatuses() {
+  state.bossStatuses = state.bossStatuses
+    .map((status) => {
+      if (status.justAdded) {
+        return {
+          ...status,
+          justAdded: false,
+        };
+      }
+
+      if (typeof status.remainingTurns === "number") {
+        return {
+          ...status,
+          remainingTurns: status.remainingTurns - 1,
+        };
+      }
+
+      return status;
+    })
+    .filter((status) => (typeof status.remainingTurns === "number" ? status.remainingTurns > 0 : true));
+}
+
+function advanceFightTurn() {
+  state.fightActionCount += 1;
+  state.currentPlayerIndex = state.fightActionCount % state.playerCount;
+  if (state.currentPlayerIndex === 0) {
+    state.roundCount += 1;
+    state.roundUsedSkillIds = [];
+    learnRandomSkill();
+  }
+  els.actingPlayer.value = t("player_n", { n: state.currentPlayerIndex + 1 });
+}
+
 function applyBattleAction(event) {
   event.preventDefault();
   if (state.phase !== "fight") {
@@ -758,73 +1315,102 @@ function applyBattleAction(event) {
     return;
   }
 
+  state.bossTurnDamage = 0;
+  state.currentSkill = null;
+  state.currentSkillResult = null;
   autoResolveEffects();
+  resolveBossStatusesAtTurnStart();
+  const playerStatusResult = resolveCurrentPlayerStatuses();
+  state.bossTurnDamage += playerStatusResult.damage;
+
   let animation = "cast";
   let hasEffect = false;
   let instantAmount = 0;
   let dotAmount = 0;
   let dotTurnsApplied = 0;
+  const instantBlockStatus = state.bossStatuses.find((status) => status.type === "instant_immunity" && !status.justAdded);
 
-  if (instantDamage > 0 && instantType === "damage") {
-    state.bossHp = Math.max(0, state.bossHp - instantDamage);
-    if (state.bossHp === 0) {
-      state.defeatCgDismissed = false;
-    }
-    instantAmount = instantDamage;
-    animation = "hit";
-    hasEffect = true;
-  } else if (instantDamage > 0 && instantType === "heal") {
-    state.bossHp += instantDamage;
-    instantAmount = instantDamage;
-    animation = "heal";
-    hasEffect = true;
-  }
-
-  if (dotDamage > 0 && dotTurns > 0) {
-    const signedDotValue = dotType === "damage" ? dotDamage : -dotDamage;
-    if (signedDotValue > 0) {
-      state.bossHp = Math.max(0, state.bossHp - signedDotValue);
-      if (state.bossHp === 0) {
-        state.defeatCgDismissed = false;
+  if (!playerStatusResult.skipTurn) {
+    if (instantDamage > 0) {
+      if (instantBlockStatus) {
+        addLog({ type: "i18n", key: "boss_instant_blocked_action" });
+        const blockedDamage = calculateBossDamage(instantBlockStatus.blockedExtraDamage ?? 0);
+        state.bossTurnDamage += blockedDamage;
+        state.bossHp += instantBlockStatus.healOnBlock ?? 0;
+        addLog({
+          type: "i18n",
+          key: "boss_instant_block_bonus",
+          params: { player: actingPlayer },
+        });
+      } else if (instantType === "damage") {
+        const appliedDamage = applyIncomingBossDamageReduction(instantDamage);
+        state.bossHp = Math.max(0, state.bossHp - appliedDamage);
+        if (state.bossHp === 0) {
+          state.defeatCgDismissed = false;
+        }
+        instantAmount = appliedDamage;
+        animation = appliedDamage > 0 ? "hit" : "cast";
+        hasEffect = true;
+      } else if (instantType === "heal") {
+        state.bossHp += instantDamage;
+        instantAmount = instantDamage;
+        animation = "heal";
+        hasEffect = true;
       }
-      animation = "hit";
-    } else {
-      state.bossHp += Math.abs(signedDotValue);
-      animation = "heal";
     }
 
-    if (dotTurns > 1) {
-      state.effects.push({
-        id: createId(),
-        source: actingPlayer,
-        damage: signedDotValue,
-        remainingTurns: dotTurns - 1,
-        note: note,
-        noteKey: note ? null : dotType === "damage" ? "ongoing_damage" : "ongoing_heal",
-      });
+    if (dotDamage > 0 && dotTurns > 0) {
+      const rawSignedDotValue = dotType === "damage" ? dotDamage : -dotDamage;
+      const appliedSignedDotValue =
+        rawSignedDotValue > 0 ? applyIncomingBossDamageReduction(rawSignedDotValue) : rawSignedDotValue;
+      if (appliedSignedDotValue > 0) {
+        state.bossHp = Math.max(0, state.bossHp - appliedSignedDotValue);
+        if (state.bossHp === 0) {
+          state.defeatCgDismissed = false;
+        }
+        animation = appliedSignedDotValue > 0 ? "hit" : animation;
+      } else {
+        state.bossHp += Math.abs(appliedSignedDotValue);
+        animation = "heal";
+      }
+
+      if (dotTurns > 1) {
+        state.effects.push({
+          id: createId(),
+          source: actingPlayer,
+          damage: rawSignedDotValue,
+          remainingTurns: dotTurns - 1,
+          note: note,
+          noteKey: note ? null : dotType === "damage" ? "ongoing_damage" : "ongoing_heal",
+        });
+      }
+      dotAmount = Math.abs(appliedSignedDotValue);
+      dotTurnsApplied = dotTurns;
+      hasEffect = true;
     }
-    dotAmount = dotDamage;
-    dotTurnsApplied = dotTurns;
-    hasEffect = true;
   }
 
-  const skill = useRandomUnlockedSkill();
-
-  triggerBossAnimation(animation);
-
-  state.fightActionCount += 1;
-  state.currentPlayerIndex = state.fightActionCount % state.playerCount;
-  if (state.currentPlayerIndex === 0) {
-    learnRandomSkill();
+  const bossSkill = useRandomUnlockedSkill();
+  state.currentSkill = bossSkill;
+  if (bossSkill.id === "normal_attack") {
+    const damage = calculateBossDamage(1);
+    state.bossTurnDamage += damage;
+    state.currentSkillResult = {
+      summary: t("normal_attack_summary", {
+        player: actingPlayer,
+        amount: damage,
+      }),
+    };
+    addLog({
+      type: "i18n",
+      key: "boss_turn_summary",
+      params: { summary: `${getSkillName(bossSkill)}. ${state.currentSkillResult.summary}` },
+    });
+  } else {
+    state.currentSkillResult = resolveBossSkill(bossSkill);
   }
-
-  els.actingPlayer.value = t("player_n", { n: state.currentPlayerIndex + 1 });
-  els.instantEffectType.value = "damage";
-  els.instantDamage.value = "0";
-  els.dotEffectType.value = "damage";
-  els.dotDamage.value = "0";
-  els.dotTurns.value = "0";
-  els.actionNote.value = "";
+  triggerBossAnimation("cast");
+  expireEndOfTurnBossStatuses();
 
   addLog({
     type: "action",
@@ -836,8 +1422,17 @@ function applyBattleAction(event) {
     dotTurnsApplied,
     note,
     hasEffect,
-    skill,
+    skill: bossSkill,
+    skillSummary: state.currentSkillResult?.summary ?? "",
   });
+
+  advanceFightTurn();
+  els.instantEffectType.value = "damage";
+  els.instantDamage.value = "0";
+  els.dotEffectType.value = "damage";
+  els.dotDamage.value = "0";
+  els.dotTurns.value = "0";
+  els.actionNote.value = "";
   updateUI();
 }
 
@@ -864,6 +1459,18 @@ function triggerBossAnimation(type) {
   if (type) {
     els.bossAvatar.classList.add(type);
   }
+}
+
+function triggerUltimateFlare() {
+  els.bossAvatar.classList.remove("ultimate-flare");
+  els.skillBanner.classList.remove("ultimate-flare");
+  void els.bossAvatar.offsetWidth;
+  els.bossAvatar.classList.add("ultimate-flare");
+  els.skillBanner.classList.add("ultimate-flare");
+  window.setTimeout(() => {
+    els.bossAvatar.classList.remove("ultimate-flare");
+    els.skillBanner.classList.remove("ultimate-flare");
+  }, 900);
 }
 
 function openLogModal() {
@@ -909,7 +1516,12 @@ function createId() {
 }
 
 function renderEffects() {
-  if (state.effects.length === 0) {
+  const combinedEffects = [
+    ...state.effects.map((effect) => ({ ...effect, displayType: "player" })),
+    ...state.bossStatuses.map((effect) => ({ ...effect, displayType: "boss" })),
+  ];
+
+  if (combinedEffects.length === 0) {
     els.effectsList.className = "effects-list muted";
     els.effectsList.textContent = t("no_effects");
     return;
@@ -918,26 +1530,70 @@ function renderEffects() {
   els.effectsList.className = "effects-list";
   els.effectsList.textContent = "";
 
-  state.effects.forEach((effect) => {
+  combinedEffects.forEach((effect) => {
     const item = document.createElement("div");
     item.className = "effect-item";
 
     const title = document.createElement("strong");
-    title.textContent = effect.source;
+    title.textContent = effect.displayType === "boss" ? t("boss_label") : effect.source;
 
     const damageLine = document.createElement("div");
-    damageLine.textContent =
-      effect.damage > 0
-        ? t("effect_label_damage", { amount: effect.damage, turns: effect.remainingTurns })
-        : t("effect_label_heal", { amount: Math.abs(effect.damage), turns: effect.remainingTurns });
-
-    const noteLine = document.createElement("div");
-    noteLine.textContent = effect.noteKey ? t(effect.noteKey) : effect.note;
+    if (effect.displayType === "boss") {
+      const kind = getBossStatusKind(effect);
+      if (kind) {
+        item.classList.add(kind === "damage" ? "effect-item-damage" : "effect-item-heal");
+      }
+      damageLine.textContent = getBossStatusText(effect);
+    } else {
+      item.classList.add(effect.damage > 0 ? "effect-item-damage" : "effect-item-heal");
+      damageLine.textContent =
+        effect.damage > 0
+          ? t("effect_label_damage", { amount: effect.damage, turns: effect.remainingTurns })
+          : t("effect_label_heal", { amount: Math.abs(effect.damage), turns: effect.remainingTurns });
+    }
 
     item.appendChild(title);
     item.appendChild(damageLine);
-    item.appendChild(noteLine);
+    if (effect.displayType !== "boss") {
+      const noteLine = document.createElement("div");
+      noteLine.textContent = effect.noteKey ? t(effect.noteKey) : effect.note;
+      item.appendChild(noteLine);
+    }
     els.effectsList.appendChild(item);
+  });
+}
+
+function renderPlayerEffects() {
+  if (state.playerEffects.length === 0) {
+    els.playerEffectsList.className = "effects-list muted";
+    els.playerEffectsList.textContent = t("no_player_effects");
+    return;
+  }
+
+  els.playerEffectsList.className = "effects-list";
+  els.playerEffectsList.textContent = "";
+
+  state.playerEffects.forEach((effect) => {
+    const item = document.createElement("div");
+    item.className = "effect-item";
+    if (effect.type === "poison_round") {
+      item.classList.add("effect-item-damage");
+    }
+
+    const title = document.createElement("strong");
+    title.textContent = effect.player;
+
+    const effectLine = document.createElement("div");
+    effectLine.textContent =
+      effect.type === "skip_turn" ? t("player_status_skip_short") : t("player_status_poison_short");
+
+    const turnsLine = document.createElement("div");
+    turnsLine.textContent = t("player_effect_turns_label", { turns: effect.remainingRounds });
+
+    item.appendChild(title);
+    item.appendChild(effectLine);
+    item.appendChild(turnsLine);
+    els.playerEffectsList.appendChild(item);
   });
 }
 
@@ -965,8 +1621,12 @@ function renderSkillItems(container, skills, emptyText) {
     const desc = document.createElement("div");
     desc.textContent = getSkillDescription(skill);
 
+    const effect = document.createElement("div");
+    effect.textContent = getSkillEffectText(skill);
+
     item.appendChild(title);
     item.appendChild(desc);
+    item.appendChild(effect);
     container.appendChild(item);
   });
 }
@@ -1002,8 +1662,8 @@ function formatActionLog(entry) {
     summary += `${t("note_summary", { note: entry.note })} `;
   }
 
-  if (entry.skill) {
-    summary += t("skill_summary", { skill: getSkillName(entry.skill) });
+  if (entry.skill && entry.skillSummary) {
+    summary += `${t("skill_summary", { skill: getSkillName(entry.skill) })} ${entry.skillSummary}`;
   }
 
   return summary.trim();
